@@ -1,0 +1,13 @@
+{
+    "headers": [
+      {
+        "source": "/api/profile", 
+        "headers": [
+          {
+            "key": "CDN-Cache-Control",
+            "value": "public, s-maxage=300, stale-while-revalidate=3600"
+          }
+        ]
+      }
+    ]
+  }
