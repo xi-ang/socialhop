@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "react-hot-toast";
-import { QueryProvider } from './providers'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,7 +32,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="zh-CN" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <QueryProvider>
+          
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -60,7 +59,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ThemeProvider>
-          </QueryProvider>
+          
         </body>
       </html>
     </ClerkProvider>
