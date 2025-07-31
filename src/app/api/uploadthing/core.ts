@@ -1,5 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@clerk/nextjs/server";
+import { JwtService } from "@/lib/jwt";
+import { cookies } from "next/headers";
 
 const f = createUploadthing();
 
@@ -11,18 +12,21 @@ export const ourFileRouter = {
       maxFileCount: 1,
     },
   })
-    .middleware(async () => {
-      // this code runs on your server before upload
-      const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-
-      // whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId };
+    .middleware(async ({ req }) => {
+      // 临时简化 - 只返回一个测试用户ID
+      console.log("Upload middleware called");
+      return { userId: "test-user" };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       try {
         console.log("Upload complete for userId:", metadata.userId);
-        return { fileUrl: file.url };
+        console.log("File info:", {
+          url: file.url,
+          ufsUrl: file.ufsUrl,
+          name: file.name,
+          size: file.size
+        });
+        return { fileUrl: file.url || file.ufsUrl };
       } catch (error) {
         console.error("Error in onUploadComplete:", error);
         throw error;

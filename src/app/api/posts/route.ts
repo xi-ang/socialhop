@@ -1,72 +1,139 @@
-import { NextResponse } from 'next/server';
-import { toggleLike, createComment, deletePost, getPosts } from '@/actions/post.action';
+import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromRequest } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 // 获取帖子列表
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const posts = await getPosts();
-    return NextResponse.json(posts, {
-      headers: {
-        'Cache-Control': 'max-age=60, stale-while-revalidate=3600', // 配置缓存策略
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    console.log(`📄 Fetching posts: page=${page}, limit=${limit}, skip=${skip}`);
+
+    const [posts, totalCount] = await Promise.all([
+      prisma.post.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              username: true,
+            },
+          },
+          comments: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  username: true,
+                  image: true,
+                  name: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+          likes: {
+            select: {
+              userId: true,
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            },
+          },
+        },
+      }),
+      prisma.post.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasMore = page < totalPages;
+
+    console.log(`📊 Posts fetched: ${posts.length}, total: ${totalCount}, pages: ${totalPages}, hasMore: ${hasMore}`);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        posts,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+        },
       },
     });
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch posts' },
+      { status: 500 }
+    );
   }
 }
 
-
-// 点赞/取消点赞
-export async function POST(req: Request, { params }: { params: { postId: string } }) {
+// 创建新帖子
+export async function POST(request: NextRequest) {
   try {
-    const { postId } = params;
-    const result = await toggleLike(postId);
+    const user = getUserFromRequest(request);
     
-    if (!result?.success) {
-      return NextResponse.json({ error: result?.error || 'Failed to toggle like' }, { status: 400 });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
-    
-    return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
 
-// 删除帖子
-export async function DELETE(req: Request, { params }: { params: { postId: string } }) {
-  try {
-    const { postId } = params;
-    const result = await deletePost(postId);
-    
-    if (!result?.success) {
-      return NextResponse.json({ error: result?.error || 'Failed to delete post' }, { status: 400 });
-    }
-    
-    return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+    const body = await request.json();
+    const { content, image } = body;
 
-// 添加评论
-export async function PUT(req: Request, { params }: { params: { postId: string } }) {
-  try {
-    const { postId } = params;
-    const { content } = await req.json();
-    
-    if (!content) {
-      return NextResponse.json({ error: 'Content is required' }, { status: 400 });
-    }
-    
-    const result = await createComment(postId, content);
-    
-    if (!result?.success) {
-      return NextResponse.json({ error: result?.error || 'Failed to create comment' }, { status: 400 });
-    }
-    
-    return NextResponse.json(result);
+    const post = await prisma.post.create({
+      data: {
+        content,
+        image,
+        authorId: user.userId,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            username: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      post,
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Create post error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to create post' },
+      { status: 500 }
+    );
   }
 }

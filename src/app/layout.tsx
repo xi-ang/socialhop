@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
+import { ThemeProvider } from "@/components/common/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { PostsProvider } from "@/contexts/PostsContext";
+import Navbar from "@/components/navigation/Navbar";
+import Sidebar from "@/components/layout/Sidebar";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = localFont({
@@ -29,16 +31,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="zh-CN" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          <NotificationProvider>
+            <PostsProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
             <div className="min-h-screen">
               {/* 顶部导航条 */}
               <Navbar />
@@ -59,9 +62,10 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ThemeProvider>
-          
-        </body>
-      </html>
-    </ClerkProvider>
+        </PostsProvider>
+      </NotificationProvider>
+    </AuthProvider>
+      </body>
+    </html>
   );
 }

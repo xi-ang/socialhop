@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import {
     getUserLikedPosts,
     getUserPosts,
+    getUserCommentedPosts,
     isFollowing,
 } from "@/actions/profile.action";
 
-// 关键配置：启用 Edge Runtime 和缓存策略
-export const runtime = 'edge';
-export const maxDuration = 30; // 边缘函数超时时间（秒）
+// 移除Edge Runtime配置，使用默认的Node.js Runtime
+export const maxDuration = 30;
 
 export async function GET(request: Request) {
     try {
@@ -22,29 +22,46 @@ export async function GET(request: Request) {
         }
 
         // 并行获取所有数据
-        const [posts, likedPosts, isCurrentUserFollowing] = await Promise.all([
+        const [posts, likedPosts, commentedPosts, isCurrentUserFollowing] = await Promise.all([
             getUserPosts(userId),
             getUserLikedPosts(userId),
+            getUserCommentedPosts(userId),
             isFollowing(userId),
         ]);
 
+        console.log('API Response data:', {
+            postsCount: posts?.length || 0,
+            likedPostsCount: likedPosts?.length || 0,
+            commentedPostsCount: commentedPosts?.length || 0,
+            isCurrentUserFollowing
+        });
+
         // 返回统一格式的 JSON
         return NextResponse.json({
-            posts,
-            likedPosts,
+            posts: posts || [],
+            likedPosts: likedPosts || [],
+            commentedPosts: commentedPosts || [],
             isCurrentUserFollowing,
         },
             {
                 headers: {
-                    // 核心缓存配置
-                    'Cache-Control': 'public, s-maxage=60',
-                    'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600'
+                    // 禁用缓存以确保数据实时性
+                    'Cache-Control': 'no-store, no-cache, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 }
             }
         );
     } catch (error) {
+        console.error('Profile API error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch profile data' },
+            { 
+                error: 'Failed to fetch profile data',
+                posts: [],
+                likedPosts: [],
+                commentedPosts: [],
+                isCurrentUserFollowing: false
+            },
             {
                 status: 500,
                 headers: { 'Cache-Control': 'no-store' } // 错误响应不缓存

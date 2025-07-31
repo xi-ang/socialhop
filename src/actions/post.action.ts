@@ -1,11 +1,16 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { PrismaClient, NotificationType } from "@prisma/client";
 import { getDbUserId } from "./user.action";
 import { revalidatePath } from "next/cache";
 
 // 导出一个异步函数，用于创建帖子
-export async function createPost(content: string, image: string) {
+export async function createPost(
+  content: string, 
+  images: string[], 
+  mentions: { userId: string; username: string }[] = []
+) {
   try {
     // 获取数据库中的用户ID
     const userId = await getDbUserId();
@@ -15,12 +20,66 @@ export async function createPost(content: string, image: string) {
     const post = await prisma.post.create({
       data: {
         content,
-        image,
+        // 保存第一张图片到 image 字段用于向后兼容
+        image: images.length > 0 ? images[0] : null,
+        // 保存所有图片到 images 数组字段
+        images: images,
         authorId: userId,
       },
     });
 
+    // 如果有提及用户，创建通知
+    if (mentions.length > 0) {
+      // 为每个被提及的用户检查通知设置
+      const mentionNotifications = [];
+      
+      for (const mention of mentions) {
+        try {
+          // 检查用户的通知设置
+          const mentionedUser = await prisma.user.findUnique({
+            where: { id: mention.userId }
+          }) as any;
+          
+          if (mentionedUser) {
+            const settings = mentionedUser.notificationSettings || {};
+            const mentionsEnabled = settings.mentions !== false; // 默认启用
+            
+            if (mentionsEnabled) {
+              mentionNotifications.push({
+                userId: mention.userId,
+                creatorId: userId,
+                type: "MENTION" as any,
+                postId: post.id,
+              });
+            }
+          }
+        } catch (userError) {
+          console.error(`Failed to check notification settings for user ${mention.userId}:`, userError);
+          // 如果检查设置失败，仍然创建通知（默认行为）
+          mentionNotifications.push({
+            userId: mention.userId,
+            creatorId: userId,
+            type: "MENTION" as any,
+            postId: post.id,
+          });
+        }
+      }
+
+      if (mentionNotifications.length > 0) {
+        try {
+          await prisma.notification.createMany({
+            data: mentionNotifications,
+            skipDuplicates: true,
+          });
+        } catch (notificationError) {
+          console.error("Failed to create mention notifications:", notificationError);
+          // 不影响帖子创建，只记录错误
+        }
+      }
+    }
+
     revalidatePath("/"); // purge the cache for the home page
+    revalidatePath(`/profile/${userId}`); // purge the cache for the user's profile page
     return { success: true, post };
   } catch (error) {
     console.error("Failed to create post:", error);
@@ -158,7 +217,7 @@ export async function createComment(postId: string, content: string) {
     if (!post) throw new Error("Post not found");
 
     // Create comment and notification in a transaction
-    const [comment] = await prisma.$transaction(async (tx) => {
+    const [comment] = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">) => {
       // Create comment first
       const newComment = await tx.comment.create({
         data: {
