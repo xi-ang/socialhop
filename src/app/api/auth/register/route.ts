@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查是否是Prisma错误
-    if (error.code === 'P2002') {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {
       return NextResponse.json(
         { success: false, error: '用户名或邮箱已被使用' },
         { status: 400 }

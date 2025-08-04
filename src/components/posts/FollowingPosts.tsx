@@ -6,7 +6,7 @@ import PostCard from './PostCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, UsersIcon } from 'lucide-react';
 import { getPosts } from '@/actions/post.action';
-import { usePosts } from '@/contexts/PostsContext';
+import { usePosts } from '@/hooks/usePosts';
 
 // 使用与PostCard相同的Post类型
 type Posts = Awaited<ReturnType<typeof getPosts>>;

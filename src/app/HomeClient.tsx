@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import CreatePost from '@/components/posts/CreatePost';
 import InfinitePosts from '@/components/posts/InfinitePosts';
-import WhoToFollow from '@/components/users/WhoToFollow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Globe, UsersIcon } from 'lucide-react';

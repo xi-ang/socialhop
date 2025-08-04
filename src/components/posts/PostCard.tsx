@@ -1,8 +1,8 @@
 "use client";
 
 import { createComment, deletePost, getPosts, toggleLike } from "@/actions/post.action";
-import { useAuth } from "@/contexts/AuthContext";
-import { usePosts } from "@/contexts/PostsContext";
+import { useAuth } from '@/hooks/useAuth';
+import { usePosts } from '@/hooks/usePosts';
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";

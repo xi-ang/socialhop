@@ -3,8 +3,8 @@
 import { BellIcon, HomeIcon, LogOutIcon, UserIcon, SettingsIcon, SunIcon, MoonIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNotifications } from "@/contexts/NotificationContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useTheme } from "next-themes";
 
 

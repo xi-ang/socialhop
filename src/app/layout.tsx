@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { PostsProvider } from "@/contexts/PostsContext";
+import { ReduxProvider } from "@/store/ReduxProvider";
+import { DataLoader } from "@/components/common/DataLoader";
 import Navbar from "@/components/navigation/Navbar";
-import Sidebar from "@/components/layout/Sidebar";
 import { Toaster } from "react-hot-toast";
+import Sidebar from "@/components/layout/Sidebar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,15 +32,14 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <NotificationProvider>
-            <PostsProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
+        <ReduxProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <DataLoader />
             <div className="min-h-screen">
               {/* 顶部导航条 */}
               <Navbar />
@@ -62,9 +60,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ThemeProvider>
-        </PostsProvider>
-      </NotificationProvider>
-    </AuthProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

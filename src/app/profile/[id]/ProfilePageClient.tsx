@@ -1,6 +1,7 @@
 "use client";
 
 import { getProfileById, getUserPosts, updateProfile, updateAvatar } from "@/actions/profile.action";
+import { useAuth } from '@/hooks/useAuth';
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/posts/PostCard";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -19,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import {
   CalendarIcon,
@@ -59,7 +59,7 @@ function ProfilePageClient({
 
   const [editFormData, setEditFormData] = useState({
     username: user.username || "",
-    name: user.name || "匿名小生>_<",
+    name: user.name || "",
     bio: user.bio || "用户很懒，什么都没有留下~~~~",
     location: user.location || "地球村O_O",
     website: user.website || "www.example.com",

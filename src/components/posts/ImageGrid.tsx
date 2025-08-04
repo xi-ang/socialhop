@@ -41,7 +41,7 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0 flex flex-col">
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 flex flex-col">
         <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span>图片预览 ({currentIndex + 1}/{images.length})</span>
@@ -67,12 +67,13 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex items-center justify-center p-4 min-h-0">
+        <div className="flex-1 flex items-center justify-center p-4 min-h-0 overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={currentImage}
               alt={`图片 ${currentIndex + 1}`}
               className="max-w-full max-h-full object-contain rounded-lg"
+              style={{ maxHeight: 'calc(95vh - 120px)' }}
             />
             
             {/* 导航按钮 */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus, UserCheck, Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FollowButtonProps {
   userId: string;

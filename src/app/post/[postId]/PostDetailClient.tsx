@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HeartIcon, MessageCircleIcon, SendIcon, ArrowLeftIcon, LogInIcon } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import ImageGrid from '@/components/posts/ImageGrid';
 import MentionText from '@/components/common/MentionText';
 

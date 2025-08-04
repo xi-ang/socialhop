@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import SearchBox from "./SearchBox";
@@ -47,16 +47,16 @@ function MobileNavbar() {
             <SheetTitle>菜单</SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col space-y-4 mt-6">
+            <div className="px-3 py-2">
+              <SearchBox />
+            </div>
+
             <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
               <Link href="/">
                 <HomeIcon className="w-4 h-4" />
                 主页
               </Link>
             </Button>
-
-            <div className="px-3 py-2">
-              <SearchBox />
-            </div>
 
             {user ? (
               <>

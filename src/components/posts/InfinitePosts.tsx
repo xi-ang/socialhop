@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import PostCard from '@/components/posts/PostCard';
-import { usePosts } from '@/contexts/PostsContext';
+import { usePosts } from '@/hooks/usePosts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2Icon } from 'lucide-react';
