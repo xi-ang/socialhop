@@ -1,4 +1,4 @@
-// API 客户端工具类
+// API 客户端工具类-所有 HTTP 请求的统一封装器，封装了底层的 fetch 逻辑，提供结构化的 API 接口
 class ApiClient {
   private baseUrl: string;
 

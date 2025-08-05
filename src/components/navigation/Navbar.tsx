@@ -14,7 +14,7 @@ function Navbar() {
             </Link>
           </div>
 
-          {/* 搜索框 - 只在桌面端显示 */}
+          {/* 搜索框 */}
           <div className="hidden md:flex flex-1 max-w-md mx-4">
             <SearchBox />
           </div>

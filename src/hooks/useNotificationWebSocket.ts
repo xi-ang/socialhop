@@ -43,11 +43,13 @@ export function useNotificationWebSocket() {
 
   const connect = () => {
     // 如果没有用户或已经连接，则不进行连接
-    if (!user || wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log('⚠️ WebSocket connection skipped:', { 
-        hasUser: !!user, 
-        readyState: wsRef.current?.readyState 
-      });
+    if (!user?.id) {
+      console.log('⚠️ WebSocket connection skipped: No user ID');
+      return;
+    }
+    
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('⚠️ WebSocket already connected');
       return;
     }
 
@@ -58,13 +60,13 @@ export function useNotificationWebSocket() {
     }
 
     try {
-      console.log('🚀 Connecting to WebSocket server...');
+      console.log('🚀 Connecting to WebSocket server for user:', user.id);
       // 连接到 WebSocket 服务器
       const ws = new WebSocket('ws://localhost:8080');
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('🔗 WebSocket connected');
+        console.log('🔗 WebSocket connected successfully');
         setIsConnected(true);
         setReconnectAttempts(0);
         
@@ -98,6 +100,14 @@ export function useNotificationWebSocket() {
               if (message.data) {
                 console.log('🔔 New notification received:', message.data);
                 setNotifications(prev => [message.data!, ...prev]);
+                // 新通知到达时，如果是未读状态，增加未读数量
+                if (!message.data.read) {
+                  setUnreadCount(prev => {
+                    const newCount = prev + 1;
+                    console.log('📊 Unread count increased to:', newCount);
+                    return newCount;
+                  });
+                }
                 // 显示浏览器通知（如果用户允许）
                 showBrowserNotification(message.data);
               }
@@ -240,7 +250,9 @@ export function useNotificationWebSocket() {
 
   // 用户登录时连接，登出时断开
   useEffect(() => {
-    if (user) {
+    console.log('🔄 useNotificationWebSocket effect triggered, user:', user?.id);
+    
+    if (user?.id) {
       console.log('👤 User logged in, connecting WebSocket...');
       connect();
       // 获取初始未读数量
@@ -252,6 +264,7 @@ export function useNotificationWebSocket() {
     }
 
     return () => {
+      console.log('🧹 useNotificationWebSocket cleanup');
       disconnect();
     };
   }, [user?.id]); // 只依赖用户ID变化

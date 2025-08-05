@@ -6,6 +6,7 @@ import {
   markAsRead,
   markAllAsRead,
   removeNotification,
+  setUnreadCount,
   updateSettings,
   setLoading,
   setError,
@@ -16,7 +17,7 @@ import {
 export function useNotifications() {
   const dispatch = useAppDispatch();
   const notificationsState = useAppSelector((state) => {
-    console.log('Redux state.notifications:', state.notifications);
+    // console.log('Redux state.notifications:', state.notifications);
     return state.notifications;
   });
   
@@ -51,31 +52,37 @@ export function useNotifications() {
 
   const markNotificationAsRead = useCallback(async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
         method: 'POST',
         credentials: 'include',
       });
       
       if (response.ok) {
         dispatch(markAsRead(notificationId));
+        return true;
       }
+      return false;
     } catch (error) {
       dispatch(setError('标记已读失败'));
+      return false;
     }
   }, [dispatch]);
 
   const markAllNotificationsAsRead = useCallback(async () => {
     try {
-      const response = await fetch('/api/notifications/mark-all-read', {
-        method: 'POST',
+      const response = await fetch('/api/notifications', {
+        method: 'PATCH',
         credentials: 'include',
       });
       
       if (response.ok) {
         dispatch(markAllAsRead());
+        return true;
       }
+      return false;
     } catch (error) {
       dispatch(setError('标记全部已读失败'));
+      return false;
     }
   }, [dispatch]);
 
@@ -88,9 +95,12 @@ export function useNotifications() {
       
       if (response.ok) {
         dispatch(removeNotification(notificationId));
+        return true;
       }
+      return false;
     } catch (error) {
       dispatch(setError('删除通知失败'));
+      return false;
     }
   }, [dispatch]);
 
@@ -115,6 +125,10 @@ export function useNotifications() {
     dispatch(addNotification(notification));
   }, [dispatch]);
 
+  const updateUnreadCount = useCallback((count: number) => {
+    dispatch(setUnreadCount(count));
+  }, [dispatch]);
+
   const clearNotificationError = useCallback(() => {
     dispatch(clearError());
   }, [dispatch]);
@@ -131,6 +145,7 @@ export function useNotifications() {
     deleteNotification,
     updateSettings: updateNotificationSettings,
     addNotification: addNewNotification,
+    setUnreadCount: updateUnreadCount,
     clearError: clearNotificationError,
   };
 }

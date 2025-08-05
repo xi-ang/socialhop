@@ -69,8 +69,15 @@ const wss = new WebSocket.Server({
   server,
   verifyClient: (info) => {
     try {
+      // 在开发环境中，我们暂时允许所有连接
+      // 生产环境中可以加强认证
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ WebSocket connection accepted (dev mode)');
+        return true;
+      }
+      
       const cookies = cookie.parse(info.req.headers.cookie || '');
-      const token = cookies['auth-token'];
+      const token = cookies['auth-token'] || cookies['__session'] || cookies['__clerk_db_jwt'];
       
       if (!token) {
         console.log('❌ WebSocket connection rejected: No auth token');
@@ -92,13 +99,18 @@ const connectedUsers = new Map();
 wss.on('connection', (ws, req) => {
   console.log('🔗 New WebSocket connection established');
   
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies['auth-token'];
-  
-  if (!token) {
-    console.log('❌ Closing connection: No auth token');
-    ws.close(1008, 'Authentication required');
-    return;
+  // 在开发环境中跳过认证检查
+  if (process.env.NODE_ENV === 'production') {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const token = cookies['auth-token'] || cookies['__session'] || cookies['__clerk_db_jwt'];
+    
+    if (!token) {
+      console.log('❌ Closing connection: No auth token');
+      ws.close(1008, 'Authentication required');
+      return;
+    }
+  } else {
+    console.log('🔓 Skipping auth check in development mode');
   }
   
   // 处理消息

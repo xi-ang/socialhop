@@ -84,10 +84,13 @@ export async function createNotification(
     });
 
     if (existingNotification) {
-      // 更新时间戳
+      // 更新时间戳并重新设置为未读状态
       const updated = await prisma.notification.update({
         where: { id: existingNotification.id },
-        data: { createdAt: new Date() },
+        data: { 
+          createdAt: new Date(),
+          read: false // 重新标记为未读，让用户知道有新活动
+        },
         include: {
           creator: {
             select: {

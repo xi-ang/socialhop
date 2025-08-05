@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // 移除密码字段
     const { password: _, ...userWithoutPassword } = user;
 
-    // 设置 cookie 并返回响应
+    // 设置 cookie 并返回响应 - NextResponse.json()默认返回一个 200 OK 的状态码，因此响应成功不显示设置status
     const response = NextResponse.json({
       success: true,
       message: '登录成功',

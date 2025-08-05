@@ -13,6 +13,8 @@ function DesktopNavbar() {
   const { unreadCount } = useNotifications();
   const { theme, setTheme } = useTheme();
 
+  // 🎯 调试：监控徽章数量变化
+  console.log('🔔 DesktopNavbar - 当前未读数量:', unreadCount);
 
   if (!user) return null;
 

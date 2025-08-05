@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查是否是Prisma错误
+    // 检查是否是Prisma错误-P2002 是 Prisma 为“唯一约束失败”定义的错误代码。
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {
       return NextResponse.json(
         { success: false, error: '用户名或邮箱已被使用' },
@@ -97,7 +97,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('Registration error:', error);
     return NextResponse.json(
       { success: false, error: '注册失败，请稍后重试', details: error.message },
       { status: 500 }

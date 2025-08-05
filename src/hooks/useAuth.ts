@@ -27,6 +27,11 @@ export function useAuth() {
 
   const register = useCallback(async (email: string, username: string, password: string, name?: string) => {
     try {
+      // 有 .unwrap() - 直接返回 payload 或抛出错误
+      // 没有 .unwrap() - 返回的是 action 对象
+      // action 的结构：
+      // - 成功: { type: 'auth/register/fulfilled', payload: user }
+      // - 失败: { type: 'auth/register/rejected', error: { message: '用户名或邮箱已被使用' } }
       await dispatch(registerUser({ email, username, password, name })).unwrap();
     } catch (error) {
       throw error;

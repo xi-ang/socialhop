@@ -1,5 +1,5 @@
-import ImprovedNotificationsPage from './ImprovedNotificationsPage';
+import ReduxNotificationsPage from './ReduxNotificationsPage';
 
 export default function NotificationsPage() {
-  return <ImprovedNotificationsPage />;
+  return <ReduxNotificationsPage />;
 }

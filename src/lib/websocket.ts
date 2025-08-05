@@ -216,10 +216,24 @@ export class NotificationWebSocketServer {
     });
   }
 
-  // 获取未读通知数量（占位符，稍后实现）
+  // 获取未读通知数量
   private async getUnreadNotificationCount(userId: string): Promise<number> {
-    // 这个函数会在后面实现
-    return 0;
+    try {
+      // 动态导入 prisma 避免在客户端环境中引入
+      const { default: prisma } = await import('@/lib/prisma');
+      
+      const count = await prisma.notification.count({
+        where: {
+          userId: userId,
+          read: false,
+        },
+      });
+      
+      return count;
+    } catch (error) {
+      console.error('❌ Error fetching unread count:', error);
+      return 0;
+    }
   }
 
   // 获取连接的用户数量

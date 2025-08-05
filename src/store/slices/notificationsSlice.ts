@@ -11,17 +11,18 @@ interface Notification {
   id: string;
   type: 'LIKE' | 'COMMENT' | 'FOLLOW' | 'MENTION';
   userId: string;
-  fromUserId: string;
-  fromUser: {
+  creatorId: string;
+  creator: {
     id: string;
     username: string;
-    name: string;
-    image?: string;
+    name: string | null;
+    image: string | null;
   };
   postId?: string;
   post?: {
     id: string;
-    content: string;
+    content: string | null;
+    image: string | null;
   };
   commentId?: string;
   comment?: {
@@ -90,6 +91,9 @@ const notificationsSlice = createSlice({
         state.notifications.splice(index, 1);
       }
     },
+    setUnreadCount: (state, action: PayloadAction<number>) => {
+      state.unreadCount = action.payload;
+    },
     updateSettings: (state, action: PayloadAction<Partial<NotificationSettings>>) => {
       state.settings = { ...state.settings, ...action.payload };
     },
@@ -111,6 +115,7 @@ export const {
   markAsRead,
   markAllAsRead,
   removeNotification,
+  setUnreadCount,
   updateSettings,
   setLoading,
   setError,
@@ -118,3 +123,6 @@ export const {
 } = notificationsSlice.actions;
 
 export default notificationsSlice.reducer;
+
+// 导出类型
+export type { Notification, NotificationSettings };

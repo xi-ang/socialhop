@@ -28,7 +28,7 @@ export default function LoginPage() {
       toast.success('登录成功！');
       router.push('/');
     } catch (error) {
-      toast.error(error.message || '登录失败');
+      toast.error(error instanceof Error ? error.message : '登录失败');
     } finally {
       setLoading(false);
     }
