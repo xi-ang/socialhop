@@ -5,6 +5,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, Upload, X } from "lucide-react";
+import { apiClient } from '@/lib/api-client';
 import toast from "react-hot-toast";
 
 interface AvatarUploadProps {
@@ -49,16 +50,7 @@ export default function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUp
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.upload.uploadFile(formData) as any;
       
       if (data.success) {
         onAvatarChange(data.url);

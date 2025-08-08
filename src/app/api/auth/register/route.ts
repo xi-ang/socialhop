@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax', // 改为 lax，更宽松的同站策略
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 

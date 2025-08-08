@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { formatTimeAgo } from '@/lib/timeFormat';
+import { apiClient } from '@/lib/api-client';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,15 +80,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
       setHasLiked((prev) => !prev);
       setOptimisticLikes((prev) => prev + (hasLiked ? -1 : 1));
 
-      const response = await fetch(`/api/posts/${post.id}/like`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to toggle like');
-      }
-      
-      const result = await response.json();
+      const result = await apiClient.posts.toggleLike(post.id);
       console.log('✅ Detail page like API response:', result);
 
     } catch (error) {
@@ -106,19 +99,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
     try {
       setIsCommenting(true);
       
-      const response = await fetch(`/api/posts/${post.id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content: newComment })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to add comment');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.posts.addComment(post.id, newComment) as any;
       console.log('✅ Detail page comment API response:', data);
       
       if (data.success && user) {
@@ -231,7 +212,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
                   <span>{optimisticLikes}</span>
                 </Button>
               ) : (
-                <Link href="/auth/login">
+                <Link href="/login">
                   <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                     <HeartIcon className="size-5" />
                     <span>{optimisticLikes}</span>
@@ -308,7 +289,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
           ) : (
             <Card>
               <CardContent className="p-4 text-center">
-                <Link href="/auth/login">
+                <Link href="/login">
                   <Button variant="outline" className="flex items-center space-x-2">
                     <LogInIcon className="size-4" />
                     <span>登录后评论</span>

@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { XIcon, ImageIcon, PlusIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { apiClient } from '@/lib/api-client';
 
 interface MultiImageUploadProps {
   onChange: (urls: string[]) => void;
@@ -39,18 +40,12 @@ function MultiImageUpload({ onChange, value = [], maxCount = 9 }: MultiImageUplo
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || '上传失败');
+    try {
+      const result = await apiClient.upload.uploadFile(formData) as any;
+      return result.url;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '上传失败');
     }
-
-    const result = await response.json();
-    return result.url;
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {

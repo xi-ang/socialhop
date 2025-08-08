@@ -3,8 +3,6 @@
 import prisma from "@/lib/prisma";
 import { getDbUserId } from "./user.action";
 
-// 修复WebSocket导入问题 - 稍后我们会创建一个服务端函数来处理这个
-// import { getWebSocketServer } from "@/lib/websocket";
 
 // 检查用户通知设置
 async function checkUserNotificationSettings(

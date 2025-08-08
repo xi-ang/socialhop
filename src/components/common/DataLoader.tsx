@@ -15,7 +15,7 @@ export function DataLoader() {
   
   console.log('🔄 DataLoader rendered, user:', user?.id, 'authenticated:', isAuthenticated);
   
-  // 🎯 集成 WebSocket 实时通知
+  // 🎯 集成 WebSocket 实时未读数量通知
   const { 
     isConnected, 
     unreadCount, 
@@ -51,11 +51,11 @@ export function DataLoader() {
     }
   }, [unreadCount, setUnreadCount]);
 
-  // 🎯 监控 Redux 中的未读数量变化
-  const { unreadCount: reduxUnreadCount } = useNotifications();
-  useEffect(() => {
-    console.log('📈 Redux 未读数量变化:', reduxUnreadCount);
-  }, [reduxUnreadCount]);
+  // // 🎯 监控 Redux 中的未读数量变化
+  // const { unreadCount: reduxUnreadCount } = useNotifications();
+  // useEffect(() => {
+  //   console.log('📈 Redux 未读数量变化:', reduxUnreadCount);
+  // }, [reduxUnreadCount]);
 
   return null; // 这是一个无UI组件
 }

@@ -9,9 +9,9 @@ import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
-import MultiImageUpload from "./MultiImageUpload";
+import MultiImageUploadImproved from "./MultiImageUploadImproved";
 import MentionInput from "./MentionInput";
-import { sanitizeInput, detectXSS, sanitizeContent } from "@/lib/security";
+import { sanitizeInput, detectXSS } from "@/lib/security";
 
 function CreatePost() {
   const { user } = useAuth();
@@ -105,7 +105,7 @@ function CreatePost() {
 
           {(showImageUpload || images.length > 0) && (
             <div className="border rounded-lg p-4">
-              <MultiImageUpload
+              <MultiImageUploadImproved
                 value={images}
                 onChange={(urls) => {
                   setImages(urls);

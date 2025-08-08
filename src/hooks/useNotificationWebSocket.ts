@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 
 interface NotificationData {
   id: string;
@@ -34,9 +35,9 @@ export function useNotificationWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);  // 持久化 WebSocket 实例，确保在组件重新渲染时不会丢失
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);  // 重连尝试次数
 
   const maxReconnectAttempts = 5;
   const reconnectInterval = 3000; // 3秒
@@ -62,7 +63,7 @@ export function useNotificationWebSocket() {
     try {
       console.log('🚀 Connecting to WebSocket server for user:', user.id);
       // 连接到 WebSocket 服务器
-      const ws = new WebSocket('ws://localhost:8080');
+      const ws = new WebSocket('ws://localhost:8080'); // 恢复原始端口
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -100,13 +101,10 @@ export function useNotificationWebSocket() {
               if (message.data) {
                 console.log('🔔 New notification received:', message.data);
                 setNotifications(prev => [message.data!, ...prev]);
-                // 新通知到达时，如果是未读状态，增加未读数量
+                // 新通知到达时，请求最新的未读数量（而不是前端计算-之前的代码）
                 if (!message.data.read) {
-                  setUnreadCount(prev => {
-                    const newCount = prev + 1;
-                    console.log('📊 Unread count increased to:', newCount);
-                    return newCount;
-                  });
+                  console.log('📊 New unread notification received, requesting updated count from server');
+                  sendMessage({ type: 'get_unread_count' });
                 }
                 // 显示浏览器通知（如果用户允许）
                 showBrowserNotification(message.data);
@@ -187,12 +185,9 @@ export function useNotificationWebSocket() {
     } else {
       // 如果WebSocket未连接，通过API获取
       try {
-        const response = await fetch('/api/notifications/unread-count');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setUnreadCount(data.unreadCount);
-          }
+        const data = await apiClient.notifications.getUnreadCount() as any;
+        if (data.success) {
+          setUnreadCount(data.unreadCount);
         }
       } catch (error) {
         console.error('Failed to fetch unread count:', error);

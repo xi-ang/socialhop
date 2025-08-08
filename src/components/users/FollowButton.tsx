@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, UserCheck, Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 
 interface FollowButtonProps {
   userId: string;
@@ -31,8 +32,7 @@ function FollowButton({ userId, className }: FollowButtonProps) {
 
     const fetchFollowStatus = async () => {
       try {
-        const response = await fetch(`/api/users/${userId}/follow/status`);
-        const data = await response.json();
+        const data = await apiClient.users.getFollowStatus(userId) as any;
         
         if (data.success) {
           setFollowStatus(data.data);
@@ -55,12 +55,7 @@ function FollowButton({ userId, className }: FollowButtonProps) {
 
     setIsLoading(true);
     try {
-      const method = followStatus.isFollowing ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/users/${userId}/follow`, {
-        method,
-      });
-      
-      const data = await response.json();
+      const data = await apiClient.users.toggleFollow(userId) as any;
       
       if (data.success) {
         setFollowStatus(prev => prev ? {

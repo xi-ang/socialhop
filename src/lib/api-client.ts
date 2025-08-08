@@ -63,17 +63,35 @@ class ApiClient {
     
     getRandomUsers: () => this.request('/users/random'),
     
-    getByUsername: (username: string) => this.request(`/users/${username}`),
+    getByUsername: (username: string) => this.request(`/users/by-username/${username}`),
+    
+    searchUsers: (query: string, limit: number = 5) => 
+      this.request(`/users/search?q=${encodeURIComponent(query)}&limit=${limit}`),
     
     toggleFollow: (userId: string) =>
       this.request(`/users/${userId}/follow`, {
         method: 'POST',
       }),
+    
+    getFollowStatus: (userId: string) =>
+      this.request(`/users/${userId}/follow/status`),
+    
+    getFollowers: (userId: string) =>
+      this.request(`/users/${userId}/followers`),
+    
+    getFollowing: (userId: string) =>
+      this.request(`/users/${userId}/following`),
+    
+    getStats: (userId: string) =>
+      this.request(`/users/${userId}/stats`),
   };
 
   // 帖子相关
   posts = {
-    getAll: () => this.request('/posts'),
+    getAll: (page: number = 1, limit: number = 10) => 
+      this.request(`/posts?page=${page}&limit=${limit}`),
+    
+    getById: (postId: string) => this.request(`/posts/${postId}`),
     
     create: (content: string, image?: string) =>
       this.request('/posts', {
@@ -97,6 +115,9 @@ class ApiClient {
         body: JSON.stringify({ content }),
       }),
     
+    getComments: (postId: string) =>
+      this.request(`/posts/${postId}/comments`),
+    
     getUserPosts: (userId: string) => this.request(`/posts/user/${userId}`),
     
     getUserLikedPosts: (userId: string) => this.request(`/posts/user/${userId}/liked`),
@@ -106,11 +127,52 @@ class ApiClient {
   notifications = {
     getAll: () => this.request('/notifications'),
     
-    markAsRead: (notificationIds: string[]) =>
-      this.request('/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ notificationIds }),
+    getUnreadCount: () => this.request('/notifications/unread-count'),
+    
+    markAsRead: (notificationId: string) =>
+      this.request(`/notifications/${notificationId}`, {
+        method: 'PATCH',
       }),
+    
+    markAllAsRead: () =>
+      this.request('/notifications', {
+        method: 'PATCH',
+      }),
+    
+    delete: (notificationId: string) =>
+      this.request(`/notifications/${notificationId}`, {
+        method: 'DELETE',
+      }),
+    
+    getSettings: () => this.request('/notifications/settings'),
+    
+    updateSettings: (settings: any) =>
+      this.request('/notifications/settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      }),
+  };
+
+  // 文件上传相关
+  upload = {
+    uploadFile: (file: FormData) =>
+      this.request('/upload', {
+        method: 'POST',
+        body: file,
+        headers: {}, // 让浏览器自动设置Content-Type
+      }),
+    
+    // UploadThing 上传 - 云端存储
+    uploadToCloud: (files: File[]) => {
+      // 这个方法将由前端组件直接调用 UploadThing 客户端
+      // 不需要经过我们的 API 中间层
+      throw new Error('请直接使用 UploadThing 客户端上传');
+    },
+  };
+
+  // 其他功能
+  profile = {
+    getProfile: (userId: string) => this.request(`/profile?userId=${userId}`),
   };
 }
 

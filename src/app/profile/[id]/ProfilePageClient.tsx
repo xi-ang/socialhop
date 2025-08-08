@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import AvatarUpload from "@/components/profile/AvatarUpload";
+import AvatarUploadImproved from "@/components/profile/AvatarUploadImproved";
 
 type User = Awaited<ReturnType<typeof getProfileById>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
@@ -171,7 +171,7 @@ function ProfilePageClient({
             <div className="flex flex-col items-center space-y-3 md:w-48 flex-shrink-0" style={{justifyContent: 'center'}}>
               <div className="relative">
                 {isOwnProfile ? (
-                  <AvatarUpload currentAvatar={user.image || undefined} onAvatarChange={handleAvatarChange} />
+                  <AvatarUploadImproved currentAvatar={user.image || undefined} onAvatarChange={handleAvatarChange} />
                 ) : (
                   <Avatar className="w-32 h-32">
                     <AvatarImage src={user.image || "/avatar.png"} alt={user.username} />

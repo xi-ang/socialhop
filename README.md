@@ -183,3 +183,9 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 ---
 
 ⭐ 如果这个项目对你有帮助，请给个star支持一下！
+
+
+"dev": "next dev -p 3000"                    // 只启动Next.js开发服务器
+"ws:start": "node scripts/start-websocket.js"  // 只启动WebSocket服务器
+"dev:full": "concurrently \"npm run ws:start\" \"npm run dev\""  // 同时启动两个服务器（简单版）
+"dev:with-ws": "concurrently --names \"WS,NEXT\" --prefix-colors \"cyan,yellow\" \"npm run ws:start\" \"npm run dev\""  // 同时启动两个服务器（带颜色标识）

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { renderMentions } from '@/lib/security';
+import { apiClient } from '@/lib/api-client';
 import { AtSignIcon } from 'lucide-react';
 
 interface MentionTextProps {
@@ -18,14 +19,11 @@ function MentionLink({ username, children }: { username: string; children: React
     
     try {
       // 通过username查找用户ID
-      const response = await fetch(`/api/users/by-username/${username}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.userId) {
-          window.location.href = `/profile/${data.userId}`;
-        } else {
-          console.warn(`User not found: ${username}`);
-        }
+      const data = await apiClient.users.getByUsername(username) as any;
+      if (data.success && data.userId) {
+        window.location.href = `/profile/${data.userId}`;
+      } else {
+        console.warn(`User not found: ${username}`);
       }
     } catch (error) {
       console.error('Error finding user:', error);

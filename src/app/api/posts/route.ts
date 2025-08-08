@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 // 获取帖子列表
 export async function GET(request: NextRequest) {
   try {
+    // 基于 offset/limit 的传统分页
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -14,8 +15,8 @@ export async function GET(request: NextRequest) {
 
     const [posts, totalCount] = await Promise.all([
       prisma.post.findMany({
-        skip,
-        take: limit,
+        skip,         // 跳过前面的记录
+        take: limit,  // 取指定数量的记录
         orderBy: {
           createdAt: "desc",
         },
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.post.count(),
+      prisma.post.count(),  // 获取总记录数
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);

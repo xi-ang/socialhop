@@ -6,7 +6,7 @@ export default async function ProfilePage() {
   const userId = await getDbUserId();
   
   if (!userId) {
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   // 获取当前用户信息

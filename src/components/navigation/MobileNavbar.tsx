@@ -92,7 +92,7 @@ function MobileNavbar() {
               </>
             ) : (
               <Button variant="default" className="w-full" asChild>
-                <Link href="/auth/login">登录</Link>
+                <Link href="/login">登录</Link>
               </Button>
             )}
           </nav>

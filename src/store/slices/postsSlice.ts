@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { apiClient } from '@/lib/api-client';
 
 interface Post {
   id: string;
@@ -80,16 +81,7 @@ export const fetchPosts = createAsyncThunk(
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
   async ({ postId }: { postId: string }) => {
-    const response = await fetch(`/api/posts/${postId}/like`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to toggle like');
-    }
-    
-    const result = await response.json();
+    const result = await apiClient.posts.toggleLike(postId) as any;
     return { postId, hasLiked: result.hasLiked, likesCount: result.likesCount };
   }
 );
@@ -139,10 +131,10 @@ const postsSlice = createSlice({
         const { posts, pagination } = action.payload;
         
         if (pagination.page === 1) {
-          // 第一页，替换所有数据
+          // 第一页，替换所有数据（刷新场景）
           state.posts = posts;
         } else {
-          // 后续页面，追加数据
+          // 后续页面，追加数据（无限滚动场景）
           state.posts.push(...posts);
         }
         

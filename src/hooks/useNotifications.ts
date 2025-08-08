@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { apiClient } from '@/lib/api-client';
 import { 
   setNotifications,
   addNotification,
@@ -33,15 +34,9 @@ export function useNotifications() {
   const loadNotifications = useCallback(async () => {
     dispatch(setLoading(true));
     try {
-      const response = await fetch('/api/notifications', {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          dispatch(setNotifications(result.notifications));
-        }
+      const result = await apiClient.notifications.getAll() as any;
+      if (result.success) {
+        dispatch(setNotifications(result.notifications));
       }
     } catch (error) {
       dispatch(setError('加载通知失败'));
@@ -52,16 +47,9 @@ export function useNotifications() {
 
   const markNotificationAsRead = useCallback(async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        dispatch(markAsRead(notificationId));
-        return true;
-      }
-      return false;
+      await apiClient.notifications.markAsRead(notificationId);
+      dispatch(markAsRead(notificationId));
+      return true;
     } catch (error) {
       dispatch(setError('标记已读失败'));
       return false;
@@ -70,16 +58,9 @@ export function useNotifications() {
 
   const markAllNotificationsAsRead = useCallback(async () => {
     try {
-      const response = await fetch('/api/notifications', {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        dispatch(markAllAsRead());
-        return true;
-      }
-      return false;
+      await apiClient.notifications.markAllAsRead();
+      dispatch(markAllAsRead());
+      return true;
     } catch (error) {
       dispatch(setError('标记全部已读失败'));
       return false;
@@ -88,16 +69,9 @@ export function useNotifications() {
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        dispatch(removeNotification(notificationId));
-        return true;
-      }
-      return false;
+      await apiClient.notifications.delete(notificationId);
+      dispatch(removeNotification(notificationId));
+      return true;
     } catch (error) {
       dispatch(setError('删除通知失败'));
       return false;
@@ -106,16 +80,8 @@ export function useNotifications() {
 
   const updateNotificationSettings = useCallback(async (newSettings: any) => {
     try {
-      const response = await fetch('/api/notifications/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        dispatch(updateSettings(newSettings));
-      }
+      await apiClient.notifications.updateSettings(newSettings);
+      dispatch(updateSettings(newSettings));
     } catch (error) {
       dispatch(setError('更新设置失败'));
     }

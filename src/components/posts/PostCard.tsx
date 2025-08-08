@@ -3,6 +3,7 @@
 import { createComment, deletePost, getPosts, toggleLike } from "@/actions/post.action";
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
+import { apiClient } from '@/lib/api-client';
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,22 +67,14 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
       setOptmisticLikes((prev) => prev + (hasLiked ? -1 : 1));
 
       console.log('📤 Calling like API...');
-      // await toggleLike(post.id);
-      const response = await fetch(`/api/posts/${post.id}/like`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to toggle like');
-      }
-      
-      const result = await response.json();
+      const result = await apiClient.posts.toggleLike(post.id);
       console.log('✅ Like API response:', result);
 
     } catch (error) {
       console.error('❌ Like error:', error);
       setOptmisticLikes(post._count.likes);
       setHasLiked(post.likes.some((like) => like.userId === dbUserId));
+      toast.error('点赞失败，请重试');
     } finally {
       setIsLiking(false);
     }
@@ -94,19 +87,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
       setIsCommenting(true);
       
       console.log('📤 Calling comment API...');
-      const response = await fetch(`/api/posts/${post.id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content: newComment })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to add comment');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.posts.addComment(post.id, newComment) as any;
       console.log('✅ Comment API response:', data);
       
       if (data.success && user) {
@@ -149,18 +130,8 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
     if (isDeleting) return;
     try {
       setIsDeleting(true);
-      // const result = await deletePost(post.id);
-      // if (result.success) toast.success("Post deleted successfully");
-      // else throw new Error(result.error);
-
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE'
-      });
       
-      if (!response.ok) {
-        throw new Error('Failed to delete post');
-      }
-      
+      await apiClient.posts.delete(post.id);
       toast.success("Post deleted successfully");
       
       // 刷新帖子列表
@@ -240,7 +211,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
                 <span>{optimisticLikes}</span>
               </Button>
             ) : (
-              <Link href="/auth/login">
+              <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-muted-foreground gap-2">
                   <HeartIcon className="size-5" />
                   <span>{optimisticLikes}</span>

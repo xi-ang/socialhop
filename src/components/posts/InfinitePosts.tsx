@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { apiClient } from '@/lib/api-client';
 import PostCard from '@/components/posts/PostCard';
 import { usePosts } from '@/hooks/usePosts';
 import { Button } from '@/components/ui/button';
@@ -48,15 +49,7 @@ export default function InfinitePosts({
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/posts?page=${pagination.page + 1}&limit=${pagination.limit}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
-      }
-
-      const result = await response.json();
+      const result = await apiClient.posts.getAll(pagination.page + 1, pagination.limit) as any;
       
       if (result.success) {
         setPosts(prev => [...prev, ...result.data.posts]);
@@ -77,13 +70,7 @@ export default function InfinitePosts({
     setError(null);
 
     try {
-      const response = await fetch('/api/posts?page=1&limit=10');
-      
-      if (!response.ok) {
-        throw new Error('Failed to refresh posts');
-      }
-
-      const result = await response.json();
+      const result = await apiClient.posts.getAll(1, 10) as any;
       
       if (result.success) {
         setPosts(result.data.posts);
