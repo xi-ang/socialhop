@@ -1,12 +1,12 @@
 // XSS防护配置
-const purifyConfig = {
-  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a'],
-  ALLOWED_ATTR: ['href', 'target', 'rel'],
-  ALLOW_DATA_ATTR: false,
-  FORBID_SCRIPT: true,
-  FORBID_TAGS: ['script', 'object', 'embed', 'style', 'link'],
-  FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover'],
-};
+// const purifyConfig = {
+//   ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a'],
+//   ALLOWED_ATTR: ['href', 'target', 'rel'],
+//   ALLOW_DATA_ATTR: false,
+//   FORBID_SCRIPT: true,
+//   FORBID_TAGS: ['script', 'object', 'embed', 'style', 'link'],
+//   FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover'],
+// };
 
 /**
  * 净化用户输入内容，防止XSS攻击
@@ -36,41 +36,6 @@ export function sanitizeInput(input: string, maxLength: number = 280): string {
   return escaped;
 }
 
-// /**
-//  * 净化用户输入内容，防止XSS攻击（旧版本，保持向后兼容）
-//  * @deprecated 请使用 sanitizeInput 替代
-//  */
-// export function sanitizeContent(content: string): string {
-//   return sanitizeInput(content);
-// }
-
-// /**
-//  * 处理@提及，将其转换为安全的HTML
-//  */
-// export function processMentions(content: string, mentions: { userId: string; username: string }[]): string {
-//   let processedContent = sanitizeContent(content);
-  
-//   // 处理@提及
-//   mentions.forEach(mention => {
-//     const mentionRegex = new RegExp(`@${mention.username}\\b`, 'g');
-//     const mentionHtml = `<a href="/profile/${mention.userId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">@${mention.username}</a>`;
-//     processedContent = processedContent.replace(mentionRegex, mentionHtml);
-//   });
-
-//   return processedContent;
-// }
-
-// /**
-//  * 验证URL是否安全
-//  */
-// export function isValidUrl(url: string): boolean {
-//   try {
-//     const parsed = new URL(url);
-//     return ['http:', 'https:'].includes(parsed.protocol);
-//   } catch {
-//     return false;
-//   }
-// }
 
 /**
  * 验证用户输入是否包含潜在的XSS攻击
@@ -110,7 +75,8 @@ export function generateCSPHeader(): string {
     "font-src 'self' data:",                // 允许同源和data URI字体
     "connect-src 'self' ws: wss: https://*.ingest.uploadthing.com https://api.uploadthing.com", // 允许同源请求、WebSocket连接和UploadThing服务
     "media-src 'self'",                     // 允许同源媒体文件
-    "object-src 'none'",                    // 禁止<object>、<embed>等
+    // 在开发环境中允许 data: 协议的对象源，以支持浏览器扩展和开发工具
+    isDev ? "object-src 'self' data:" : "object-src 'none'", // 开发环境允许data URI对象，生产环境禁止
     "frame-ancestors 'none'",               // 禁止被其他站点嵌入
     "frame-src 'none'",                     // 禁止嵌入框架
     "base-uri 'self'",                      // 防止base标签劫持

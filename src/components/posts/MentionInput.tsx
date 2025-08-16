@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { apiClient } from '@/lib/api-client';
 
 interface User {
   id: string;
@@ -43,11 +44,8 @@ export default function MentionInput({
     }
 
     try {
-      const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&limit=5`);
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.users || []);
-      }
+      const data = await apiClient.users.searchUsers(query, 5) as any;
+      setSuggestions(data.users || []);
     } catch (error) {
       console.error('Error searching users:', error);
     }

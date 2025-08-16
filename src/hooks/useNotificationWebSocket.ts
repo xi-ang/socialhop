@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { TokenManager } from '@/lib/token-manager';
 import { apiClient } from '@/lib/api-client';
 
 interface NotificationData {
@@ -48,6 +49,13 @@ export function useNotificationWebSocket() {
       console.log('⚠️ WebSocket connection skipped: No user ID');
       return;
     }
+
+    // 检查是否有有效的 token
+    const token = TokenManager.getToken();
+    if (!token || TokenManager.isTokenExpired()) {
+      console.log('⚠️ WebSocket connection skipped: No valid token');
+      return;
+    }
     
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       console.log('⚠️ WebSocket already connected');
@@ -62,8 +70,8 @@ export function useNotificationWebSocket() {
 
     try {
       console.log('🚀 Connecting to WebSocket server for user:', user.id);
-      // 连接到 WebSocket 服务器
-      const ws = new WebSocket('ws://localhost:8080'); // 恢复原始端口
+      // 连接到 WebSocket 服务器，并在 URL 中传递 token
+      const ws = new WebSocket(`ws://localhost:8080?token=${encodeURIComponent(token)}`);
       wsRef.current = ws;
 
       ws.onopen = () => {

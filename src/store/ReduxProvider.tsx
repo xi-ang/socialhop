@@ -27,7 +27,7 @@ export function ReduxProvider({ children }: { children: React.ReactNode }) {
     setIsClient(true);
   }, []);
 
-  // 在服务端渲染时，不使用 PersistGate
+  // 在服务端渲染和初次客户端渲染时，立即显示内容而不等待持久化
   if (!isClient) {
     return (
       <Provider store={store}>
@@ -38,15 +38,12 @@ export function ReduxProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 在客户端，使用完整的持久化功能
+  // 客户端渲染：同时进行持久化恢复和内容渲染
+  // (PersistGate 的主要作用是在状态持久化（Rehydration）完成之前，阻止应用的 UI 渲染。)
   return (
     <Provider store={store}>
       <PersistGate 
-        loading={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">正在加载...</div>
-          </div>
-        } 
+        loading={null} // 不显示加载屏，让页面立即渲染
         persistor={persistor}
       >
         <AuthChecker>

@@ -99,13 +99,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { content, image } = body;
+    // 检查 Content-Type 来决定如何解析请求体
+    const contentType = request.headers.get('content-type') || '';
+    
+    let content, images: string[] = [];
+    
+    if (contentType.includes('multipart/form-data')) {
+      // 处理 FormData
+      const formData = await request.formData();
+      content = formData.get('content') as string;
+      const imageList = formData.getAll('images') as string[];
+      images = imageList.filter(Boolean);
+    } else {
+      // 处理 JSON
+      const body = await request.json();
+      content = body.content;
+      if (body.image) {
+        images = [body.image];
+      }
+      if (body.images) {
+        images = body.images;
+      }
+    }
 
     const post = await prisma.post.create({
       data: {
         content,
-        image,
+        image: images[0] || null, // 向后兼容
+        images: images,
         authorId: user.userId,
       },
       include: {
@@ -115,6 +136,26 @@ export async function POST(request: NextRequest) {
             name: true,
             image: true,
             username: true,
+          },
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+        likes: {
+          select: {
+            userId: true,
           },
         },
         _count: {

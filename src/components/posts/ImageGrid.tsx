@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Download, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 interface ImageGridProps {
   images: string[];
@@ -40,8 +41,15 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 flex flex-col">
+    <Dialog open={true} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+      }
+    }}>
+      <DialogContent 
+        className="max-w-[95vw] w-full max-h-[95vh] p-0 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span>图片预览 ({currentIndex + 1}/{images.length})</span>
@@ -49,7 +57,10 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
               <Button
                 variant="outline"
                 size="sm"
-                onClick={downloadImage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadImage();
+                }}
                 className="h-8"
               >
                 <Download className="h-4 w-4 mr-1" />
@@ -58,7 +69,10 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onClose}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
                 className="h-8"
               >
                 <X className="h-4 w-4" />
@@ -80,7 +94,10 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
             {images.length > 1 && (
               <>
                 <button
-                  onClick={onPrev}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPrev();
+                  }}
                   className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
                   disabled={currentIndex === 0}
                 >
@@ -89,7 +106,10 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
                   </svg>
                 </button>
                 <button
-                  onClick={onNext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNext();
+                  }}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
                   disabled={currentIndex === images.length - 1}
                 >
@@ -109,7 +129,8 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
               {images.map((image, index) => (
                 <button
                   key={index}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     const diff = index - currentIndex;
                     if (diff > 0) {
                       for (let i = 0; i < diff; i++) onNext();
@@ -121,10 +142,11 @@ function ImagePreview({ images, currentIndex, onClose, onNext, onPrev }: ImagePr
                     index === currentIndex ? 'border-primary' : 'border-transparent'
                   }`}
                 >
-                  <img
+                  <LazyImage
                     src={image}
                     alt={`缩略图 ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full"
+                    objectFit="cover"
                   />
                 </button>
               ))}
@@ -250,12 +272,13 @@ function ImageGrid({ images, className = "" }: ImageGridProps) {
               }}
               onContextMenu={(e) => handleContextMenu(e, image, index)}
             >
-              <img
+              <LazyImage
                 src={image}
                 alt={`图片 ${index + 1}`}
-                className={`w-full object-cover ${
+                className={`w-full ${
                   images.length === 1 ? 'max-h-96' : 'h-32 sm:h-40'
                 }`}
+                objectFit="cover"
               />
               
               {/* 悬停时显示放大图标 */}

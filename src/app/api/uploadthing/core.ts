@@ -12,13 +12,36 @@ export const ourFileRouter = {
     },
   })
     .middleware(async ({ req }) => {
-      const user = getUserFromRequest(req);
-      if (!user) throw new Error("Unauthorized");
-      return { userId: user.userId };
+      try {
+        // 尝试获取认证信息
+        const authHeader = req.headers.get('authorization');
+        
+        console.log("singleImage middleware - Auth header:", authHeader ? 'Present' : 'Missing');
+        
+        if (!authHeader) {
+          console.warn("No authentication found in request");
+          // 对于头像上传，我们暂时允许匿名上传，但记录用户ID为anonymous
+          return { userId: "anonymous" };
+        }
+        
+        const user = getUserFromRequest(req);
+        if (!user) {
+          console.warn("No user found in singleImage middleware, allowing anonymous upload");
+          return { userId: "anonymous" };
+        }
+        
+        console.log("singleImage middleware - userId:", user.userId);
+        return { userId: user.userId };
+      } catch (error) {
+        console.error("Error in singleImage middleware:", error);
+        // 降级处理：允许匿名上传
+        return { userId: "anonymous" };
+      }
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("Single image upload complete for userId:", metadata.userId);
       console.log("File URL:", file.url);
+      // ✅ 上传完成回调 - 返回文件URL
       return { fileUrl: file.url };
     }),
 

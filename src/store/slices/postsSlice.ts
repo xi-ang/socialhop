@@ -55,16 +55,7 @@ const initialState: PostsState = {
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
   async ({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/posts?page=${page}&limit=${limit}`, {
-      credentials: 'include',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch posts');
-    }
-    
-    const result = await response.json();
+    const result = await apiClient.posts.getAll(page, limit) as any;
     
     if (result.success) {
       return {

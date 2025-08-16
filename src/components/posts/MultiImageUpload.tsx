@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { XIcon, ImageIcon, PlusIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { apiClient } from '@/lib/api-client';
+import { UploadButton } from "@/lib/uploadthing";
 
 interface MultiImageUploadProps {
   onChange: (urls: string[]) => void;
@@ -37,66 +37,14 @@ function MultiImageUpload({ onChange, value = [], maxCount = 9 }: MultiImageUplo
   };
 
   const uploadFile = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const result = await apiClient.upload.uploadFile(formData) as any;
-      return result.url;
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : '上传失败');
-    }
+    // 此方法已弃用，现在直接使用 UploadThing
+    throw new Error('请使用 UploadThing 上传');
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    
-    if (files.length === 0) return;
-
-    // 检查数量限制
-    if (value.length + files.length > maxCount) {
-      toast.error(`最多只能上传 ${maxCount} 张图片`);
-      return;
-    }
-
-    // 验证所有文件
-    for (const file of files) {
-      const error = validateFile(file);
-      if (error) {
-        toast.error(`${file.name}: ${error}`);
-        return;
-      }
-    }
-
-    // 开始上传
-    const uploadIds = files.map(() => Math.random().toString(36).substring(2, 15));
-    setUploading(prev => [...prev, ...uploadIds]);
-
-    try {
-      const uploadPromises = files.map(async (file, index) => {
-        const uploadId = uploadIds[index];
-        try {
-          toast.loading(`正在上传 ${file.name}...`, { id: uploadId });
-          const url = await uploadFile(file);
-          toast.success(`${file.name} 上传成功！`, { id: uploadId });
-          return url;
-        } catch (error) {
-          toast.error(`${file.name} 上传失败: ${error instanceof Error ? error.message : '未知错误'}`, { id: uploadId });
-          throw error;
-        }
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      onChange([...value, ...urls]);
-    } catch (error) {
-      console.error('Upload error:', error);
-    } finally {
-      setUploading(prev => prev.filter(id => !uploadIds.includes(id)));
-      // 清空文件输入
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+    // 此功能已迁移到 UploadThing 组件，不再使用传统文件选择
+    event.preventDefault();
+    toast.error('请使用下方的上传按钮');
   };
 
   const removeImage = (index: number) => {
@@ -131,47 +79,76 @@ function MultiImageUpload({ onChange, value = [], maxCount = 9 }: MultiImageUplo
         </div>
       )}
 
-      {/* 上传按钮 */}
+      {/* 上传按钮 - 使用 UploadThing 云端上传 */}
       {canAddMore && (
-        <div className="flex flex-col items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleFileSelect}
-            disabled={uploading.length > 0}
-            className="w-full h-32 border-dashed border-2 hover:border-primary/50 transition-colors"
-          >
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              {uploading.length > 0 ? (
-                <>
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                  <span className="text-sm">上传中...</span>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-1">
-                    <ImageIcon className="h-6 w-6" />
-                    <PlusIcon className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm">点击上传图片</span>
-                  <span className="text-xs">
-                    支持 JPEG、PNG、GIF、WebP，最大 5MB
-                  </span>
-                  <span className="text-xs">
-                    ({value.length}/{maxCount})
-                  </span>
-                </>
-              )}
-            </div>
-          </Button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
+        <div className="space-y-3">
+          {/* UploadThing 上传按钮 */}
+          <UploadButton
+            endpoint="multipleImages"
+            onClientUploadComplete={(res) => {
+              const newUrls = res?.map(file => file.url).filter(Boolean) || [];
+              if (newUrls.length > 0) {
+                // 检查是否超过最大数量
+                const totalFiles = value.length + newUrls.length;
+                if (totalFiles > maxCount) {
+                  const allowedCount = maxCount - value.length;
+                  const allowedUrls = newUrls.slice(0, allowedCount);
+                  onChange([...value, ...allowedUrls]);
+                  toast.success(`已上传 ${allowedUrls.length} 张图片到云端`);
+                  if (allowedUrls.length < newUrls.length) {
+                    toast.error(`已达到最大上传数量限制 (${maxCount} 张)`);
+                  }
+                } else {
+                  onChange([...value, ...newUrls]);
+                  toast.success(`已上传 ${newUrls.length} 张图片到云端`);
+                }
+              }
+              setUploading([]);
+            }}
+            onUploadError={(error: Error) => {
+              console.error("Upload error:", error);
+              toast.error(`上传失败: ${error.message}`);
+              setUploading([]);
+            }}
+            onUploadBegin={() => {
+              setUploading(['uploading']);
+              toast.loading("正在上传到云端...", { id: "upload-progress" });
+            }}
+            onUploadProgress={(progress) => {
+              console.log("Upload progress:", progress);
+            }}
+            appearance={{
+              container: "w-full",
+              button: "w-full h-32 bg-transparent border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 text-muted-foreground hover:text-foreground transition-colors ut-uploading:bg-primary/5",
+              allowedContent: "text-xs text-muted-foreground",
+            }}
+            content={{
+              button: (
+                <div className="flex flex-col items-center gap-2">
+                  {uploading.length > 0 ? (
+                    <>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <span className="text-sm">上传中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <ImageIcon className="h-6 w-6" />
+                        <PlusIcon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm">点击上传图片到云端</span>
+                      <span className="text-xs">
+                        支持 JPEG、PNG、GIF、WebP，最大 4MB
+                      </span>
+                      <span className="text-xs">
+                        ({value.length}/{maxCount})
+                      </span>
+                    </>
+                  )}
+                </div>
+              ),
+              allowedContent: `支持 JPEG、PNG、GIF、WebP，最大 4MB，最多 ${Math.max(0, maxCount - value.length)} 张`
+            }}
           />
         </div>
       )}

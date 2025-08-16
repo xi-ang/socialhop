@@ -61,24 +61,13 @@ export async function POST(request: NextRequest) {
       username: user.username,
     });
 
-    // 设置 cookie 并返回响应
-    const response = NextResponse.json({
+    // 返回响应（不再设置 cookie，token 由客户端存储到 localStorage）
+    return NextResponse.json({
       success: true,
       message: '注册成功',
       user,
-      token,
+      token, // 返回 token 供客户端存储
     });
-
-    response.cookies.set({
-      name: 'auth-token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // 改为 lax，更宽松的同站策略
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    });
-
-    return response;
   } catch (error) {
     console.error('Registration error details:', error);
     
@@ -98,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: '注册失败，请稍后重试', details: error.message },
+      { success: false, error: '注册失败，请稍后重试', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

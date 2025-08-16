@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
-import { createNotification } from '@/actions/notification.action';
+import { createNotification } from '@/lib/notifications';
 import prisma from '@/lib/prisma';
 
 async function broadcastNotification(userId: string, notification: any, creator: any) {

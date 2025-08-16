@@ -1,19 +1,9 @@
-import { getDbUserId } from "@/actions/user.action";
 import HomeClient from "./HomeClient";
+import { apiClient } from "@/lib/api-client";
 
 async function getInitialPosts() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/posts?page=1&limit=10`, {
-      cache: 'no-store',
-    });
-    
-    if (!response.ok) {
-      console.error('Failed to fetch posts:', response.status, response.statusText);
-      throw new Error('Failed to fetch posts');
-    }
-    
-    const result = await response.json();
+    const result = await apiClient.posts.getAll(1, 10) as any;
     
     if (result.success) {
       return {
@@ -49,14 +39,12 @@ async function getInitialPosts() {
 }
 
 export default async function Home() {
-  const dbUserId = await getDbUserId();
   const { posts, pagination } = await getInitialPosts();
 
   return (
     <HomeClient 
       initialPosts={posts} 
       initialPagination={pagination} 
-      dbUserId={dbUserId} 
     />
   );
 }

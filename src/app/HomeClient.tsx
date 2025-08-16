@@ -7,12 +7,9 @@ import InfinitePosts from '@/components/posts/InfinitePosts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Globe, UsersIcon } from 'lucide-react';
-import { getPosts } from '@/actions/post.action';
+import { Post } from '@/lib/api-client';
 import PageControls from '@/components/common/PageControls';
 import FollowingPosts from '@/components/posts/FollowingPosts';
-
-type Posts = Awaited<ReturnType<typeof getPosts>>;
-type Post = Posts[number];
 
 type HomeClientProps = {
   initialPosts: Post[];
@@ -23,7 +20,6 @@ type HomeClientProps = {
     totalPages: number;
     hasMore: boolean;
   };
-  dbUserId: string | null;
 };
 
 // 骨架屏组件
@@ -91,8 +87,7 @@ function HomeSkeleton() {
 
 export default function HomeClient({ 
   initialPosts, 
-  initialPagination, 
-  dbUserId 
+  initialPagination 
 }: HomeClientProps) {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('square');
@@ -153,7 +148,7 @@ export default function HomeClient({
                 <InfinitePosts 
                   initialPosts={initialPosts}
                   initialPagination={initialPagination}
-                  dbUserId={dbUserId}
+                  dbUserId={user?.id || null}
                 />
               </TabsContent>
 
@@ -161,7 +156,7 @@ export default function HomeClient({
               <TabsContent value="following" className="mt-0 p-6">
                 <div className="space-y-6">
                   {user ? (
-                    <FollowingPosts dbUserId={dbUserId} />
+                    <FollowingPosts dbUserId={user?.id || null} />
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       请先登录以查看关注的帖子

@@ -20,13 +20,13 @@ import MentionText from '@/components/common/MentionText';
 type PostDetailProps = {
   post: {
     id: string;
-    content: string;
+    content: string | null;
     image: string | null;
     createdAt: Date;
     author: {
       id: string;
       username: string;
-      name: string;
+      name: string | null;
       image: string | null;
     };
     likes: Array<{
@@ -34,7 +34,7 @@ type PostDetailProps = {
       user: {
         id: string;
         username: string;
-        name: string;
+        name: string | null;
         image: string | null;
       };
     }>;
@@ -45,7 +45,7 @@ type PostDetailProps = {
       author: {
         id: string;
         username: string;
-        name: string;
+        name: string | null;
         image: string | null;
       };
     }>;
@@ -77,6 +77,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
     console.log('🔄 Detail page like clicked for post:', post.id);
     try {
       setIsLiking(true);
+      // 立即切换本地状态（UI立刻变化）
       setHasLiked((prev) => !prev);
       setOptimisticLikes((prev) => prev + (hasLiked ? -1 : 1));
 
@@ -179,7 +180,7 @@ export default function PostDetailClient({ post, dbUserId, defaultTab }: PostDet
             {/* 帖子内容 */}
             <div className="space-y-4">
               <MentionText 
-                content={post.content} 
+                content={post.content || ''} 
                 className="text-lg break-words"
               />
               

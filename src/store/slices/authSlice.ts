@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiClient, User } from '@/lib/api-client';
+import { TokenManager } from '@/lib/token-manager';
 
 // 异步thunk - 登录
 export const loginUser = createAsyncThunk(
@@ -34,6 +35,11 @@ export const registerUser = createAsyncThunk(
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async () => {
+    // 首先检查本地是否有 token
+    if (!TokenManager.hasToken() || TokenManager.isTokenExpired()) {
+      throw new Error('未登录或 token 已过期');
+    }
+    
     const response = await apiClient.users.getMe() as any;
     if (response.success) {
       return response.user;
@@ -47,6 +53,29 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async () => {
     await apiClient.auth.logout();
+    // Token 已经在 apiClient.auth.logout() 中清除
+  }
+);
+
+// 异步thunk - 用于应用启动时恢复认证状态
+export const initializeAuth = createAsyncThunk(
+  'auth/initialize',
+  async () => {
+    if (!TokenManager.hasToken() || TokenManager.isTokenExpired()) {
+      throw new Error('无有效 token');
+    }
+    
+    try {
+      const response = await apiClient.users.getMe() as any;
+      if (response.success) {
+        return response.user;
+      }
+      throw new Error('获取用户信息失败');
+    } catch (error) {
+      // 如果获取用户信息失败，清除无效 token
+      TokenManager.clearToken();
+      throw error;
+    }
   }
 );
 
@@ -151,6 +180,23 @@ const authSlice = createSlice({
       .addCase(logoutUser.rejected, (state) => {
         state.loading = false;
         state.error = '登出失败';
+      });
+
+    // 初始化认证状态
+    builder
+      .addCase(initializeAuth.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(initializeAuth.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(initializeAuth.rejected, (state) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.user = null;
       });
   },
 });

@@ -10,11 +10,35 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HeartIcon, MessageCircleIcon, UserPlusIcon, CheckIcon, AtSignIcon } from 'lucide-react';
-import { getNotifications, markNotificationAsRead } from '@/actions/notification.action';
+import { apiClient } from '@/lib/api-client';
 import PageControls from '@/components/common/PageControls';
 
-type Notifications = Awaited<ReturnType<typeof getNotifications>>;
-type Notification = Notifications[number];
+type Notification = {
+  id: string;
+  type: 'LIKE' | 'COMMENT' | 'FOLLOW' | 'MENTION';
+  read: boolean;
+  createdAt: string;
+  userId: string;
+  creatorId: string;
+  postId?: string | null;
+  commentId?: string | null;
+  creator: {
+    id: string;
+    name: string | null;
+    username: string;
+    image: string | null;
+  };
+  post?: {
+    id: string;
+    content: string | null;
+    image: string | null;
+  } | null;
+  comment?: {
+    id: string;
+    content: string;
+    createdAt: string;
+  } | null;
+};
 
 const getNotificationIcon = (type: string) => {
   switch (type as string) {
@@ -77,7 +101,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      const data = await getNotifications();
+      const data = await apiClient.notifications.getAll() as Notification[];
       setNotifications(data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -92,7 +116,7 @@ export default function NotificationsPage() {
       // 如果是未读通知，标记为已读
       if (!notification.read) {
         console.log('📖 Marking notification as read:', notification.id);
-        await markNotificationAsRead(notification.id, notification.userId);
+        await apiClient.notifications.markAsRead(notification.id);
         
         // 更新本地状态
         setNotifications(prev => 
@@ -126,12 +150,8 @@ export default function NotificationsPage() {
 
       console.log('📖 Marking all notifications as read...');
       
-      // 使用Promise.all来批量标记
-      await Promise.all(
-        unreadNotifications.map(notification => 
-          markNotificationAsRead(notification.id, notification.userId)
-        )
-      );
+      // 使用 API 客户端的批量标记方法
+      await apiClient.notifications.markAllAsRead();
 
       // 更新本地状态
       setNotifications(prev => 

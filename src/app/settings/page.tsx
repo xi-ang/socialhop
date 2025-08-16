@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, Eye, EyeOff, Save, Trash2, Bell, HeartIcon, MessageCircleIcon, UserPlusIcon, AtSignIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import { changePassword, deleteAccount, updateUserSettings } from "@/actions/settings.action";
+import { apiClient } from "@/lib/api-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,20 +70,17 @@ function SettingsPage() {
   useEffect(() => {
     const loadNotificationSettings = async () => {
       try {
-        const response = await fetch('/api/user/notification-settings');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            // 确保包含所有字段的默认值
-            const settingsWithDefaults = {
-              likes: true,
-              comments: true,
-              follows: true,
-              mentions: true,
-              ...data.settings,
-            };
-            setNotificationSettings(settingsWithDefaults);
-          }
+        const data = await apiClient.users.getNotificationSettings() as any;
+        if (data.success) {
+          // 确保包含所有字段的默认值
+          const settingsWithDefaults = {
+            likes: true,
+            comments: true,
+            follows: true,
+            mentions: true,
+            ...data.settings,
+          };
+          setNotificationSettings(settingsWithDefaults);
         }
       } catch (error) {
         console.error('Failed to load notification settings:', error);
@@ -101,7 +98,7 @@ function SettingsPage() {
     setIsLoading(prev => ({ ...prev, basicInfo: true }));
 
     try {
-      const result = await updateUserSettings(basicInfo);
+      const result = await apiClient.users.updateSettings(basicInfo) as any;
       if (result.success) {
         toast.success("资料更新成功");
         updateUser(basicInfo);
@@ -120,13 +117,7 @@ function SettingsPage() {
     setIsLoading(prev => ({ ...prev, notifications: true }));
 
     try {
-      const response = await fetch('/api/user/notification-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: notificationSettings }),
-      });
-      
-      const data = await response.json();
+      const data = await apiClient.users.updateNotificationSettings(notificationSettings) as any;
       
       if (data.success) {
         toast.success("通知设置已保存");
@@ -157,7 +148,7 @@ function SettingsPage() {
     setIsLoading(prev => ({ ...prev, password: true }));
 
     try {
-      const result = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+      const result = await apiClient.users.changePassword(passwordData.currentPassword, passwordData.newPassword) as any;
       if (result.success) {
         toast.success("密码修改成功");
         setPasswordData({
@@ -180,7 +171,7 @@ function SettingsPage() {
     setIsLoading(prev => ({ ...prev, deleteAccount: true }));
 
     try {
-      const result = await deleteAccount();
+      const result = await apiClient.users.deleteAccount() as any;
       if (result.success) {
         toast.success("账号已注销");
         logout();

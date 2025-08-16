@@ -1,18 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromRequest } from '@/lib/auth';
 import {
     getUserLikedPosts,
     getUserPosts,
     getUserCommentedPosts,
     isFollowing,
-} from "@/actions/profile.action";
+} from "@/lib/profile";
 
 // 移除Edge Runtime配置，使用默认的Node.js Runtime
 export const maxDuration = 30;
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     try {
         const url = new URL(request.url);
         const userId = url.searchParams.get('userId'); // 从查询参数获取 userId
+        
+        // 获取当前用户信息（可能为null，表示未登录）
+        const currentUser = getUserFromRequest(request);
+        const currentUserId = currentUser?.userId || null;
 
         if (!userId) {
             return NextResponse.json(
@@ -26,7 +31,7 @@ export async function GET(request: Request) {
             getUserPosts(userId),
             getUserLikedPosts(userId),
             getUserCommentedPosts(userId),
-            isFollowing(userId),
+            currentUserId ? isFollowing(currentUserId, userId) : false,
         ]);
 
         console.log('API Response data:', {

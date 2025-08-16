@@ -179,3 +179,80 @@ export async function DELETE(
     );
   }
 }
+
+// 获取单个帖子详情
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { postId: string } }
+) {
+  try {
+    const { postId } = params;
+    const user = getUserFromRequest(request);
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+          },
+        },
+        likes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    if (!post) {
+      return NextResponse.json(
+        { success: false, error: '帖子不存在' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      post,
+      dbUserId: user?.userId || null,
+    });
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    return NextResponse.json(
+      { success: false, error: '获取帖子失败' },
+      { status: 500 }
+    );
+  }
+}

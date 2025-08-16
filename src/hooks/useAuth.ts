@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginUser, registerUser, logoutUser, updateUser, clearError } from '@/store/slices/authSlice';
+import { loginUser, registerUser, logoutUser, updateUser, clearError, initializeAuth } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 // 替代原来的 useAuth hook
@@ -55,6 +55,15 @@ export function useAuth() {
     dispatch(clearError());
   }, [dispatch]);
 
+  const initialize = useCallback(async () => {
+    try {
+      await dispatch(initializeAuth()).unwrap();
+    } catch (error) {
+      // 初始化失败不显示错误提示，静默处理
+      console.log('Auth initialization failed:', error);
+    }
+  }, [dispatch]);
+
   return {
     user,
     loading,
@@ -65,5 +74,6 @@ export function useAuth() {
     logout,
     updateUser: updateUserProfile,
     clearError: clearAuthError,
+    initialize,
   };
 }

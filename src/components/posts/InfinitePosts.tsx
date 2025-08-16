@@ -2,16 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, Post } from '@/lib/api-client';
 import PostCard from '@/components/posts/PostCard';
 import { usePosts } from '@/hooks/usePosts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2Icon } from 'lucide-react';
-import { getPosts } from '@/actions/post.action';
-
-type Posts = Awaited<ReturnType<typeof getPosts>>;
-type Post = Posts[number];
 
 type InfinitePostsProps = {
   initialPosts: Post[];
@@ -123,7 +119,7 @@ export default function InfinitePosts({
       
       {/* 帖子列表 */}
       {!isRefreshing && posts.map((post) => (
-        <PostCard key={post.id} post={post} dbUserId={dbUserId} />
+        <PostCard key={post.id} post={post as any} dbUserId={dbUserId} />
       ))}
 
       {/* 加载更多指示器 */}

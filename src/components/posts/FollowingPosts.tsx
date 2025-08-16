@@ -1,16 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import PostCard from './PostCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, UsersIcon } from 'lucide-react';
-import { getPosts } from '@/actions/post.action';
+import { Post, apiClient } from '@/lib/api-client';
 import { usePosts } from '@/hooks/usePosts';
-
-// 使用与PostCard相同的Post类型
-type Posts = Awaited<ReturnType<typeof getPosts>>;
-type Post = Posts[number];
 
 interface FollowingPostsProps {
   dbUserId: string | null;
@@ -36,7 +32,7 @@ export default function FollowingPosts({ dbUserId }: FollowingPostsProps) {
   });
 
   // 获取关注用户的帖子
-  const fetchPosts = async (page = 1, reset = false) => {
+  const fetchPosts = useCallback(async (page = 1, reset = false) => {
     try {
       if (page === 1) {
         setIsLoading(true);
@@ -44,13 +40,7 @@ export default function FollowingPosts({ dbUserId }: FollowingPostsProps) {
         setIsLoadingMore(true);
       }
 
-      const response = await fetch(`/api/posts/following?page=${page}&limit=${pagination.limit}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch following posts');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.posts.getFollowing(page, pagination.limit) as any;
       
       if (data.success) {
         if (reset || page === 1) {
@@ -70,7 +60,7 @@ export default function FollowingPosts({ dbUserId }: FollowingPostsProps) {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  };
+  }, [pagination.limit]);
 
   // 初始加载
   useEffect(() => {

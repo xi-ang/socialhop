@@ -3,11 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
 import { Separator } from "@/components/ui/separator";
 import { LinkIcon, MapPinIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiClient } from "@/lib/api-client";
 
 interface UserStats {
   followersCount: number;
@@ -25,31 +26,28 @@ function Sidebar() {
   const [statsLoading, setStatsLoading] = useState(false);
 
   // 获取用户统计数据
-  const fetchUserStats = async () => {
+  const fetchUserStats = useCallback(async () => {
     if (!user) return;
     
     setStatsLoading(true);
     try {
-      const response = await fetch(`/api/users/${user.id}/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUserStats(data.stats);
-        }
+      const data = await apiClient.users.getStats(user.id) as any;
+      if (data.success) {
+        setUserStats(data.stats);
       }
     } catch (error) {
       console.error('Failed to fetch user stats:', error);
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, [user]);
 
   // 用户登录后获取统计数据
   useEffect(() => {
     if (user && !loading) {
       fetchUserStats();
     }
-  }, [user, loading]);
+  }, [user, loading, fetchUserStats]);
 
   // 每30秒刷新一次数据（可根据需要调整）
   useEffect(() => {
@@ -57,7 +55,7 @@ function Sidebar() {
     
     const interval = setInterval(fetchUserStats, 30000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, fetchUserStats]);
 
   if (loading) {
     return (
@@ -88,9 +86,10 @@ function Sidebar() {
               href={`/profile/${user.id}`}
               className="flex flex-col items-center justify-center"
             >
-              <Avatar className="w-20 h-20 border-2 ">
-                <AvatarImage src={user.image || "/avatar.png"} />
-              </Avatar>
+              <LazyAvatar className="w-20 h-20 border-2 ">
+                <LazyAvatarImage src={user.image || "/avatar.png"} alt={user.name || user.username} />
+                <LazyAvatarFallback>{user.name?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
+              </LazyAvatar>
 
               <div className="mt-4 space-y-1">
                 <h3 className="font-semibold">{user.name}</h3>

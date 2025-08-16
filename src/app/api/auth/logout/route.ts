@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 清除认证cookie
+// 登出处理（客户端负责清除 localStorage 中的 token）
 export async function POST(request: NextRequest) {
   try {
-    const response = NextResponse.json({
+    // 由于 token 存储在客户端 localStorage 中，服务端无需特殊处理
+    // 只需要返回成功响应，实际的 token 清除由客户端完成
+    return NextResponse.json({
       success: true,
       message: '登出成功'
     });
-
-    // 清除认证cookie
-    response.cookies.set({
-      name: 'auth-token',
-      value: '',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 0, // 立即过期
-    });
-
-    return response;
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json(

@@ -4,12 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
 import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createPost } from "@/actions/post.action";
+import { Textarea } from "@/components/ui/textarea";
+import { apiClient } from "@/lib/api-client";
 import toast from "react-hot-toast";
-import MultiImageUploadImproved from "./MultiImageUploadImproved";
+import SmartImageUpload from "./SmartImageUpload";
 import MentionInput from "./MentionInput";
 import { sanitizeInput, detectXSS } from "@/lib/security";
 
@@ -22,20 +23,11 @@ function CreatePost() {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [mentions, setMentions] = useState<{ userId: string; username: string }[]>([]);
 
-  const handleContentChange = (newContent: string) => {
-    // 基本安全检查
-    if (detectXSS(newContent)) {
-      toast.error("内容包含不允许的字符，请重新输入");
-      return;
-    }
-    
-    const sanitized = sanitizeInput(newContent, 280);
-    setContent(sanitized);
-  };
+  if (!user) return null;
 
-  const handleMentionAdd = (userId: string, username: string) => {
+  const handleMention = (userId: string, username: string) => {
     setMentions(prev => {
-      // 避免重复添加
+      // 避免重复添加同一个用户
       if (prev.some(m => m.userId === userId)) {
         return prev;
       }
@@ -44,32 +36,58 @@ function CreatePost() {
   };
 
   const handleSubmit = async () => {
-    if (!content.trim() && images.length === 0) return;
+    if (!content.trim() && images.length === 0) {
+      toast.error("请输入内容或添加图片");
+      return;
+    }
 
-    // 最终安全检查
-    if (detectXSS(content)) {
-      toast.error("内容包含不安全的字符");
+    // 安全检查
+    const sanitizedContent = sanitizeInput(content);
+    if (detectXSS(sanitizedContent)) {
+      toast.error("内容包含不安全字符，请检查后重试");
       return;
     }
 
     setIsPosting(true);
+
     try {
-      const result = await createPost(content, images, mentions);
-      if (result?.success) {
-        // reset the form
+      let response;
+      
+      if (images.length > 0) {
+        // 如果有图片，使用 FormData 方式
+        const formData = new FormData();
+        formData.append('content', sanitizedContent);
+        
+        // 添加图片数据
+        images.forEach((imageUrl, index) => {
+          if (index === 0) {
+            formData.append('image', imageUrl); // 向后兼容
+          }
+          formData.append('images', imageUrl);
+        });
+        
+        // 添加提及的用户
+        mentions.forEach(mention => {
+          formData.append('mentions', mention.userId);
+        });
+        
+        response = await apiClient.posts.createWithFormData(formData);
+      } else {
+        // 没有图片，使用常规方式
+        response = await apiClient.posts.create(sanitizedContent);
+      }
+      
+      if (response) {
         setContent("");
         setImages([]);
         setMentions([]);
         setShowImageUpload(false);
-
-        // 刷新帖子列表
         refreshPosts();
-
-        toast.success("发布成功");
+        toast.success("帖子发布成功！");
       }
     } catch (error) {
-      console.error("Failed to create post:", error);
-      toast.error("发布失败");
+      console.error("Error creating post:", error);
+      toast.error("发布失败，请重试");
     } finally {
       setIsPosting(false);
     }
@@ -77,80 +95,76 @@ function CreatePost() {
 
   return (
     <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          <div className="flex space-x-4">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.image || "/avatar.png"} />
-            </Avatar>
-            <div className="flex-1">
-              <MentionInput
-                value={content}
-                onChange={handleContentChange}
-                onMentionAdd={handleMentionAdd}
-                placeholder="分享你的想法... (输入@可以提及其他用户)"
-                className="min-h-[100px] resize-none border-none focus-visible:ring-0 p-0 text-base"
-                maxLength={280}
-              />
-              <div className="text-xs text-muted-foreground mt-2">
-                {content.length}/280
-                {mentions.length > 0 && (
-                  <span className="ml-2">
-                    · 提及了 {mentions.length} 个用户
-                  </span>
-                )}
+      <CardContent className="p-4">
+        <div className="flex space-x-3">
+          <LazyAvatar className="w-10 h-10 flex-shrink-0">
+            <LazyAvatarImage 
+              src={user.image || "/avatar.png"} 
+              alt={user.name || user.username}
+            />
+            <LazyAvatarFallback>{user.name?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
+          </LazyAvatar>
+          
+          <div className="flex-1 space-y-3">
+            <MentionInput
+              value={content}
+              onChange={setContent}
+              onMentionAdd={handleMention}
+              placeholder={`${user.name || user.username}，分享一些新鲜事...`}
+              className="min-h-[80px] resize-none border-none p-0 text-base placeholder:text-muted-foreground focus-visible:ring-0"
+            />
+
+            {/* 图片上传区域 */}
+            {(showImageUpload || images.length > 0) && (
+              <div className="mt-3">
+                <SmartImageUpload
+                  value={images}
+                  onChange={(urls: string[]) => {
+                    setImages(urls);
+                    if (urls.length === 0) setShowImageUpload(false);
+                  }}
+                  maxCount={9}
+                />
               </div>
-            </div>
-          </div>
+            )}
 
-          {(showImageUpload || images.length > 0) && (
-            <div className="border rounded-lg p-4">
-              <MultiImageUploadImproved
-                value={images}
-                onChange={(urls) => {
-                  setImages(urls);
-                  if (urls.length === 0) setShowImageUpload(false);
-                }}
-                maxCount={9}
-              />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between border-t pt-4">
-            <div className="flex space-x-2">
+            {/* 操作按钮 */}
+            <div className="flex items-center justify-between pt-2 border-t">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-primary"
                 onClick={() => setShowImageUpload(!showImageUpload)}
-                disabled={isPosting}
+                className="text-primary hover:text-primary/80"
               >
-                <ImageIcon className="size-4 mr-2" />
-                图片 ({images.length}/9)
+                <ImageIcon className="w-4 h-4 mr-2" />
+                图片
+              </Button>
+
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isPosting || (!content.trim() && images.length === 0)}
+                size="sm"
+                className="px-6"
+              >
+                {isPosting ? (
+                  <>
+                    <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                    发布中...
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="w-4 h-4 mr-2" />
+                    发布
+                  </>
+                )}
               </Button>
             </div>
-            <Button
-              className="flex items-center"
-              onClick={handleSubmit}
-              disabled={(!content.trim() && images.length === 0) || isPosting}
-            >
-              {isPosting ? (
-                <>
-                  <Loader2Icon className="size-4 mr-2 animate-spin" />
-                  发布中...
-                </>
-              ) : (
-                <>
-                  <SendIcon className="size-4 mr-2" />
-                  发布
-                </>
-              )}
-            </Button>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
 export default CreatePost;

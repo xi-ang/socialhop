@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { createNotification } from '@/actions/notification.action';
+import { createNotification } from '@/lib/notifications';
 
 // 点赞/取消点赞帖子
 export async function POST(

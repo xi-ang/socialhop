@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { BellIcon, HeartIcon, MessageCircleIcon, UserPlusIcon, AtSignIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageControls from '@/components/common/PageControls';
+import { apiClient } from '@/lib/api-client';
 
 interface NotificationSettings {
   likes: boolean;
@@ -72,13 +73,7 @@ export default function NotificationSettingsPage() {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/user/notification-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings }),
-      });
-      
-      const data = await response.json();
+      const data = await apiClient.users.updateNotificationSettings(settings) as any;
       
       if (data.success) {
         // 同时保存到localStorage作为备份
@@ -100,21 +95,18 @@ export default function NotificationSettingsPage() {
     const loadSettings = async () => {
       try {
         // 首先尝试从服务器获取设置
-        const response = await fetch('/api/user/notification-settings');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            const settingsWithDefaults = {
-              likes: true,
-              comments: true,
-              follows: true,
-              mentions: true,
-              browserNotifications: false,
-              ...data.settings,
-            };
-            setSettings(settingsWithDefaults);
-            return;
-          }
+        const data = await apiClient.users.getNotificationSettings() as any;
+        if (data.success) {
+          const settingsWithDefaults = {
+            likes: true,
+            comments: true,
+            follows: true,
+            mentions: true,
+            browserNotifications: false,
+            ...data.settings,
+          };
+          setSettings(settingsWithDefaults);
+          return;
         }
         
         // 如果服务器获取失败，从localStorage获取

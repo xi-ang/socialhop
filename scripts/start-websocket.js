@@ -50,7 +50,12 @@ const server = createServer((req, res) => {
   const { pathname, query } = parse(req.url, true);
   
   // 设置CORS头
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  // res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else {
+    // 生产环境不设置该头，默认只允许同域
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
@@ -110,17 +115,23 @@ const wss = new WebSocket.Server({
   verifyClient: (info) => {
     try {
       console.log('🤝 WebSocket handshake - checking credentials...');
-      const cookies = cookie.parse(info.req.headers.cookie || '');
-      // console.log('🍪 Available cookies:', Object.keys(cookies));
       
-      const token = cookies['auth-token'];
+      // 首先尝试从 URL query 参数获取 token (localStorage -> WebSocket URL)
+      const url = new URL(info.req.url, `http://${info.req.headers.host}`);
+      let token = url.searchParams.get('token');
+      
+      // // 如果 URL 中没有 token，尝试从 cookie 获取 (向后兼容)
+      // if (!token) {
+      //   const cookies = cookie.parse(info.req.headers.cookie || '');
+      //   token = cookies['auth-token'];
+      // }
       
       if (!token) {
-        console.log('❌ WebSocket connection rejected: No auth-token cookie');
+        console.log('❌ WebSocket connection rejected: No auth token in URL or cookie');
         return false;
       }
       
-      console.log('🎫 Found auth-token, verifying...');
+      console.log('🎫 Found auth token, verifying...');
       const payload = verifyJwtToken(token);
       if (!payload?.userId) {
         console.log('❌ WebSocket connection rejected: Invalid JWT token or missing userId');
@@ -147,11 +158,18 @@ wss.on('connection', (ws, req) => {
   
   // 连接建立后的二次验证（生产环境）
   if (process.env.NODE_ENV === 'production') {
-    const cookies = cookie.parse(req.headers.cookie || '');
-    const token = cookies['auth-token'];
+    // 首先尝试从 URL query 参数获取 token
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    let token = url.searchParams.get('token');
+    
+    // // 如果 URL 中没有 token，尝试从 cookie 获取 (向后兼容)
+    // if (!token) {
+    //   const cookies = cookie.parse(req.headers.cookie || '');
+    //   token = cookies['auth-token'];
+    // }
     
     if (!token) {
-      console.log('❌ Closing connection: No auth-token cookie');
+      console.log('❌ Closing connection: No auth token');
       ws.close(1008, 'Authentication required');
       return;
     }
@@ -164,7 +182,6 @@ wss.on('connection', (ws, req) => {
     }
     
     ws.userId = payload.userId; // 保存用户ID到连接对象
-    // console.log('✅ Production mode: JWT token verified for user', payload.userId);
     console.log('✅ Production mode: JWT token verified for user');
   } else {
     console.log('🔓 Development mode: Simplified auth check');
@@ -360,7 +377,7 @@ global.broadcastNotification = broadcastNotification;
 global.broadcastUnreadCount = broadcastUnreadCount;
 
 // 启动服务器
-const PORT = process.env.WEBSOCKET_PORT || 8080; // 恢复原始端口
+const PORT = process.env.WEBSOCKET_PORT || 8080; 
 server.listen(PORT, () => {
   console.log(`🎯 WebSocket server running on ws://localhost:${PORT}`);
   console.log('📡 Waiting for connections...');

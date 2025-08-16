@@ -5,6 +5,7 @@ import { XIcon, UploadIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { UploadDropzone, UploadButton } from "@/lib/uploadthing";
 import { Button } from "@/components/ui/button";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 interface MultiImageUploadProps {
   onChange: (urls: string[]) => void;
@@ -37,10 +38,11 @@ function MultiImageUploadImproved({
           {/* 已上传的图片 */}
           {value.map((url, index) => (
             <div key={`uploaded-${index}`} className="relative group aspect-square">
-              <img
+              <LazyImage
                 src={url}
                 alt={`上传的图片 ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-border"
+                className="w-full h-full rounded-lg border border-border"
+                objectFit="cover"
               />
               <button
                 onClick={() => removeImage(index)}
@@ -55,10 +57,11 @@ function MultiImageUploadImproved({
           {/* 正在上传的图片预览 */}
           {uploadingFiles.map((previewUrl, index) => (
             <div key={`uploading-${index}`} className="relative group aspect-square">
-              <img
+              <LazyImage
                 src={previewUrl}
                 alt={`正在上传的图片 ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-border opacity-75"
+                className="w-full h-full rounded-lg border border-border opacity-75"
+                objectFit="cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
                 <div className="w-3/4 space-y-2">
@@ -94,8 +97,8 @@ function MultiImageUploadImproved({
             </div>
             
             <UploadButton
-              endpoint="multipleImages"
-              onClientUploadComplete={(res) => {
+              endpoint="multipleImages"  // 指定上传端点
+              onClientUploadComplete={(res) => {  // 上传成功
                 const newUrls = res?.map(file => file.url).filter(Boolean) || [];
                 if (newUrls.length > 0) {
                   // 检查是否超过最大数量
@@ -134,7 +137,7 @@ function MultiImageUploadImproved({
               onUploadProgress={(progress) => {
                 setProgress(Math.round(progress));
               }}
-              onBeforeUploadBegin={(files) => {
+              onBeforeUploadBegin={(files) => {  // 上传前预处理
                 // 预览上传前的图片
                 const filePreviewUrls = Array.from(files).map(file => URL.createObjectURL(file));
                 

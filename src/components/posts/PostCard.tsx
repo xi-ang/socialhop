@@ -1,6 +1,5 @@
 "use client";
 
-import { createComment, deletePost, getPosts, toggleLike } from "@/actions/post.action";
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
 import { apiClient } from '@/lib/api-client';
@@ -9,7 +8,7 @@ import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
 import { formatDistanceToNow } from "date-fns";
 import { formatTimeAgo } from "@/lib/timeFormat";
 import { DeleteAlertDialog } from "@/components/common/DeleteAlertDialog";
@@ -20,9 +19,8 @@ import ImageGrid from "./ImageGrid";
 import FollowButton from "@/components/users/FollowButton";
 import MentionText from "@/components/common/MentionText";
 
-type Posts = Awaited<ReturnType<typeof getPosts>>;
-type Post = Posts[number];
-
+// 使用 any 类型简化处理
+type Post = any;
 
 function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
   const { user } = useAuth();
@@ -32,7 +30,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
   const [isCommenting, setIsCommenting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [hasLiked, setHasLiked] = useState(post.likes.some((like) => like.userId === dbUserId));
+  const [hasLiked, setHasLiked] = useState(post.likes.some((like: any) => like.userId === dbUserId));
   const [optimisticLikes, setOptmisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
   const [localComments, setLocalComments] = useState(post.comments);
@@ -63,8 +61,8 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
     console.log('🔄 Real like button clicked for post:', post.id);
     try {
       setIsLiking(true);
-      setHasLiked((prev) => !prev);
-      setOptmisticLikes((prev) => prev + (hasLiked ? -1 : 1));
+      setHasLiked((prev: any) => !prev);
+      setOptmisticLikes((prev: any) => prev + (hasLiked ? -1 : 1));
 
       console.log('📤 Calling like API...');
       const result = await apiClient.posts.toggleLike(post.id);
@@ -73,7 +71,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
     } catch (error) {
       console.error('❌ Like error:', error);
       setOptmisticLikes(post._count.likes);
-      setHasLiked(post.likes.some((like) => like.userId === dbUserId));
+      setHasLiked(post.likes.some((like: any) => like.userId === dbUserId));
       toast.error('点赞失败，请重试');
     } finally {
       setIsLiking(false);
@@ -109,8 +107,8 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
           }
         };
         
-        setLocalComments(prev => [newCommentData, ...prev]);
-        setLocalCommentCount(prev => prev + 1);
+        setLocalComments((prev: any) => [newCommentData, ...prev]);
+        setLocalCommentCount((prev: any) => prev + 1);
         
         // 同时触发帖子列表的刷新（但不刷新页面）
         refreshPosts();
@@ -150,9 +148,13 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
         <div className="space-y-4">
           <div className="flex space-x-3 sm:space-x-4">
             <Link href={`/profile/${post.author.id}`}>
-              <Avatar className="size-8 sm:w-10 sm:h-10">
-                <AvatarImage src={post.author.image ?? "/avatar.png"} />
-              </Avatar>
+              <LazyAvatar className="size-8 sm:w-10 sm:h-10">
+                <LazyAvatarImage src={
+                  // 如果帖子作者是当前用户，使用全局用户状态的头像，否则使用帖子中的头像
+                  user?.id === post.author.id ? (user?.image ?? "/avatar.png") : (post.author.image ?? "/avatar.png")
+                } alt={post.author.name} />
+                <LazyAvatarFallback>{post.author.name?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
+              </LazyAvatar>
             </Link>
 
             {/* POST HEADER & TEXT CONTENT */}
@@ -247,11 +249,15 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
             <div className="space-y-4 pt-4 border-t">
               <div className="space-y-4">
                 {/* DISPLAY PREVIEW COMMENTS */}
-                {previewComments.map((comment) => (
+                {previewComments.map((comment: any) => (
                   <div key={comment.id} className="flex space-x-3">
-                    <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                    </Avatar>
+                    <LazyAvatar className="size-8 flex-shrink-0">
+                      <LazyAvatarImage src={
+                        // 如果评论作者是当前用户，使用全局用户状态的头像，否则使用评论中的头像
+                        user?.id === comment.author.id ? (user?.image ?? "/avatar.png") : (comment.author.image ?? "/avatar.png")
+                      } alt={comment.author.name} />
+                      <LazyAvatarFallback>{comment.author.name?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
+                    </LazyAvatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-medium text-sm">{comment.author.name}</span>
@@ -286,9 +292,10 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
 
               {user ? (
                 <div className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.image || "/avatar.png"} />
-                  </Avatar>
+                  <LazyAvatar className="size-8 flex-shrink-0">
+                    <LazyAvatarImage src={user?.image || "/avatar.png"} alt={user?.name || "用户"} />
+                    <LazyAvatarFallback>{user?.name?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
+                  </LazyAvatar>
                   <div className="flex-1">
                     <Textarea
                       placeholder="写下你的评论..."

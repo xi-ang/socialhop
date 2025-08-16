@@ -6,6 +6,7 @@ import PostCard from "@/components/posts/PostCard";
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchIcon } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 interface Post {
   id: string;
@@ -42,11 +43,9 @@ export default function SearchResults() {
   const searchPosts = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/posts/search?q=${encodeURIComponent(searchQuery)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(data.posts || []);
-      }
+      const data = await apiClient.posts.search(searchQuery);
+      // data 是 { success: true, posts: Post[], query: string } 类型
+      setPosts((data as any).posts || []);
     } catch (error) {
       console.error('Failed to search posts:', error);
     } finally {
