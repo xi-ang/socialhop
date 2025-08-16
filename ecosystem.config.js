@@ -1,11 +1,12 @@
 module.exports = {
   apps: [
+    // 主应用
     {
       name: 'social-app',
       script: 'npm',
       args: 'start',
       cwd: '/var/www/social',
-      instances: 1, // 根据服务器配置调整
+      instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
@@ -21,13 +22,33 @@ module.exports = {
       out_file: '/var/log/pm2/social-app-out.log',
       log_file: '/var/log/pm2/social-app.log',
       time: true,
-      // 进程管理配置
       min_uptime: '10s',
       max_restarts: 10,
-      // 监控配置
-      monitor: false,
-      // 内存监控
       max_memory_restart: '500M',
+    },
+    // WebSocket 服务器
+    {
+      name: 'websocket-server',
+      script: 'scripts/start-websocket.js',
+      cwd: '/var/www/social',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      env: {
+        NODE_ENV: 'production',
+        WEBSOCKET_PORT: 8080,
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        WEBSOCKET_PORT: 8080,
+      },
+      error_file: '/var/log/pm2/websocket-error.log',
+      out_file: '/var/log/pm2/websocket-out.log',
+      log_file: '/var/log/pm2/websocket.log',
+      time: true,
+      min_uptime: '10s',
+      max_restarts: 10,
+      max_memory_restart: '200M',
     }
   ],
 

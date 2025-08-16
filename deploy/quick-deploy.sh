@@ -21,8 +21,34 @@ echo "   内存: $(free -h | awk '/^Mem/ {print $2}')"
 echo ""
 
 # 询问用户配置
-read -p "🔗 请输入您的 GitHub 仓库地址（默认：https://github.com/xi-ang/socialhop.git）: " REPO_URL
-REPO_URL=${REPO_URL:-"https://github.com/xi-ang/socialhop.git"}
+echo "📝 请选择代码获取方式："
+echo "1. 从 GitHub 克隆（推荐）"
+echo "2. 手动上传代码文件"
+echo "3. 稍后手动配置"
+read -p "请选择 [1-3]: " CODE_METHOD
+
+case $CODE_METHOD in
+    1)
+        read -p "🔗 请输入您的 GitHub 仓库地址（默认：https://github.com/xi-ang/socialhop.git）: " REPO_URL
+        REPO_URL=${REPO_URL:-"https://github.com/xi-ang/socialhop.git"}
+        USE_GIT=true
+        ;;
+    2)
+        echo "📦 请稍后使用以下命令上传代码："
+        echo "   scp -r '本地项目路径' root@$(curl -s http://checkip.amazonaws.com):/var/www/social/"
+        echo "   或使用 SFTP 工具上传"
+        USE_GIT=false
+        ;;
+    3)
+        echo "⏭️ 跳过代码部署，稍后手动配置"
+        USE_GIT=skip
+        ;;
+    *)
+        echo "❌ 无效选择，默认使用 GitHub 方式"
+        REPO_URL="https://github.com/xi-ang/socialhop.git"
+        USE_GIT=true
+        ;;
+esac
 
 read -p "🌐 请输入您的域名（没有请直接回车）: " DOMAIN_NAME
 
@@ -80,7 +106,34 @@ EOF
 echo "🚀 6/7: 部署应用..."
 mkdir -p /var/www/social
 cd /var/www/social
-git clone $REPO_URL .
+
+if [ "$USE_GIT" = "true" ]; then
+    echo "📦 从 GitHub 克隆代码..."
+    git clone $REPO_URL .
+elif [ "$USE_GIT" = "false" ]; then
+    echo "⏳ 等待用户上传代码..."
+    echo "请在另一个终端执行："
+    echo "scp -r '您的项目路径' root@$(curl -s http://checkip.amazonaws.com):/var/www/social/"
+    echo ""
+    read -p "代码上传完成后，按 Enter 继续..."
+    
+    # 检查是否有 package.json
+    if [ ! -f "package.json" ]; then
+        echo "❌ 未找到 package.json 文件，请确保代码已正确上传到 /var/www/social/"
+        exit 1
+    fi
+elif [ "$USE_GIT" = "skip" ]; then
+    echo "⏭️ 跳过代码部署，仅安装环境..."
+    echo "请稍后手动上传代码并运行部署脚本"
+    echo ""
+    echo "手动部署步骤："
+    echo "1. 上传代码到 /var/www/social/"
+    echo "2. 配置 .env.production 文件"
+    echo "3. 运行: cd /var/www/social && ./deploy/deploy.sh"
+    echo ""
+    echo "✅ 环境安装完成！"
+    exit 0
+fi
 
 # 生成环境变量文件
 cat > .env.production << EOF

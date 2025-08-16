@@ -70,8 +70,17 @@ export function useNotificationWebSocket() {
 
     try {
       console.log('🚀 Connecting to WebSocket server for user:', user.id);
+      
+      // 根据环境选择 WebSocket 服务器地址
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
+                   (process.env.NODE_ENV === 'production' 
+                     ? `ws://${window.location.hostname}:8080` 
+                     : 'ws://localhost:8080');
+      
+      console.log('📡 WebSocket URL:', wsUrl);
+      
       // 连接到 WebSocket 服务器，并在 URL 中传递 token
-      const ws = new WebSocket(`ws://localhost:8080?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
