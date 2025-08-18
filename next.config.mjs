@@ -1,30 +1,30 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 🌐 图片优化配置
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'uploadthing.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'utfs.io',
-        pathname: '/**',
-      },
-    ],
-    // 图片缓存配置
-    minimumCacheTTL: 31536000, // 1年缓存
-  },
+  // images: {
+  //   remotePatterns: [
+  //     {
+  //       protocol: 'https',
+  //       hostname: 'uploadthing.com',
+  //       pathname: '/**',
+  //     },
+  //     {
+  //       protocol: 'https',
+  //       hostname: 'utfs.io',
+  //       pathname: '/**',
+  //     },
+  //   ],
+  //   // 图片缓存配置
+  //   minimumCacheTTL: 31536000, // 1年缓存
+  // },
   
-  // 🚀 性能优化
-  experimental: {
-    optimizeCss: true,
-  },
+  // // 🚀 性能优化
+  // experimental: {
+  //   optimizeCss: true,
+  // },
   
-  // 📦 压缩配置
-  compress: true,
+  // // 📦 压缩配置
+  // compress: true,
   
   webpack: (config, { isServer }) => {
     if (!isServer) {

@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from "@/lib/api-client";
 import PostCard from "@/components/posts/PostCard";
-import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import SmartAvatarUpload from "@/components/profile/SmartAvatarUpload";
 
 // 使用简化的类型定义
 type User = any;
@@ -51,14 +52,10 @@ function ProfilePageClient({
   posts,
   user,
 }: ProfilePageClientProps) {
-  const { user: currentUser, updateUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 头像相关状态
-  const [currentAvatar, setCurrentAvatar] = useState(user.image);
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
   const [editFormData, setEditFormData] = useState({
     username: user.username || "",
@@ -94,17 +91,11 @@ function ProfilePageClient({
   const handleAvatarChange = async (newAvatarUrl: string) => {
     try {
       const result = await apiClient.profile.updateAvatar(newAvatarUrl) as any;
+      
       if (result.success) {
         toast.success("头像更新成功！");
-        // 立即更新头像显示，而不是刷新页面
-        setCurrentAvatar(newAvatarUrl);
-        // 也更新用户对象，以确保其他地方使用的头像也是最新的
-        user.image = newAvatarUrl;
-        
-        // 最重要：更新全局Redux状态，确保侧边栏和其他组件的头像也同步更新
-        if (currentUser && currentUser.id === user.id) {
-          updateUser({ ...currentUser, image: newAvatarUrl });
-        }
+        // 刷新页面以显示新头像
+        window.location.reload();
       } else {
         toast.error(result.error || "头像更新失败");
       }
@@ -112,54 +103,6 @@ function ProfilePageClient({
       console.error("Error updating avatar:", error);
       toast.error("头像更新失败");
     }
-  };
-
-  // 直接处理头像上传的函数
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 验证文件类型
-    if (!file.type.startsWith('image/')) {
-      toast.error('请选择图片文件');
-      return;
-    }
-
-    // 验证文件大小 (4MB)
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error('图片大小不能超过 4MB');
-      return;
-    }
-
-    try {
-      setIsAvatarUploading(true);
-      
-      // 使用 FormData 上传文件
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // 使用 apiClient 上传文件，这会自动处理认证
-      const result = await apiClient.upload.uploadFile(formData) as any;
-
-      if (result.success && result.url) {
-        await handleAvatarChange(result.url);
-      } else {
-        toast.error(result.error || '上传失败');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('上传失败');
-    } finally {
-      setIsAvatarUploading(false);
-      // 清除文件输入，允许重新选择相同文件
-      event.target.value = '';
-    }
-  };
-
-  // 触发文件选择的函数
-  const triggerAvatarUpload = () => {
-    const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
-    fileInput?.click();
   };
 
   const handleFollow = async () => {
@@ -170,7 +113,7 @@ function ProfilePageClient({
 
     try {
       setIsFollowing((prev) => !prev);
-      await apiClient.users.toggleFollow(user.id);
+      await apiClient.users.followUser(user.id);
       toast.success(isFollowing ? "取消关注成功" : "关注成功");
     } catch (error) {
       setIsFollowing((prev) => !prev);
@@ -228,42 +171,16 @@ function ProfilePageClient({
             {/* Left side: Avatar and Username */}
             <div className="flex flex-col items-center space-y-3 md:w-48 flex-shrink-0" style={{justifyContent: 'center'}}>
               <div className="relative">
-                <LazyAvatar className="w-32 h-32">
-                  <LazyAvatarImage src={currentAvatar || "/avatar.png"} alt={user.username} />
-                  <LazyAvatarFallback>{user.username?.charAt(0)?.toUpperCase() || '?'}</LazyAvatarFallback>
-                </LazyAvatar>
-                {isOwnProfile && (
-                  <>
-                    {/* 隐藏的文件输入 */}
-                    <input
-                      type="file"
-                      id="avatar-upload"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                      className="hidden"
-                      disabled={isAvatarUploading}
-                    />
-                    {/* 头像编辑按钮 */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute bottom-0 right-0 rounded-full p-2 bg-white shadow-md"
-                      onClick={triggerAvatarUpload}
-                      disabled={isAvatarUploading}
-                    >
-                      {isAvatarUploading ? (
-                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <EditIcon className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </>
-                )}
-                {/* 头像上传状态提示 */}
-                {isAvatarUploading && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                    <div className="text-white text-xs">上传中...</div>
-                  </div>
+                {isOwnProfile ? (
+                  <SmartAvatarUpload 
+                    initialImage={user.image} 
+                    userId={user.id} 
+                    onAvatarUpdate={handleAvatarChange} 
+                  />
+                ) : (
+                  <Avatar className="w-32 h-32">
+                    <AvatarImage src={user.image || "/avatar.png"} alt={user.username} />
+                  </Avatar>
                 )}
               </div>
               <div className="text-center space-y-1">
