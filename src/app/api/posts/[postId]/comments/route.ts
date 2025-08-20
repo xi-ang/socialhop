@@ -100,9 +100,16 @@ export async function POST(
     }
 
     console.log(`✅ === COMMENT API COMPLETED ===\n`);
+    // 返回最新的帖子评论统计，便于前端无刷新更新列表上的评论数
+    const postCount = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { _count: { select: { comments: true } } }
+    });
+
     return NextResponse.json({
       success: true,
       comment,
+      post: { id: postId, _count: { comments: postCount?._count.comments ?? 0 } }
     });
   } catch (error) {
     console.error('❌ === COMMENT API ERROR ===');

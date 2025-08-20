@@ -30,6 +30,19 @@ export async function POST(
       },
     });
 
+    // 标记单条已读后广播未读数刷新
+    try {
+      const port = process.env.WEBSOCKET_PORT || 8080;
+      const baseUrl = process.env.WEBSOCKET_URL || `http://localhost:${port}`;
+      await fetch(`${baseUrl}/broadcast-unread`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.userId })
+      });
+    } catch (wsError) {
+      console.warn('⚠️ Failed to broadcast unread count after mark-read:', wsError);
+    }
+
     return NextResponse.json({
       success: true,
       notification,
@@ -41,6 +54,14 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+// 兼容 PATCH 方法标记为已读
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return POST(request, { params });
 }
 
 // 删除单个通知

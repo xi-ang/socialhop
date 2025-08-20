@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
+import { usePosts } from '@/hooks/usePosts';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 
 /**
@@ -12,6 +13,7 @@ import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 export function DataLoader() {
   const { user, isAuthenticated } = useAuth();
   const { loadNotifications, addNotification, setUnreadCount } = useNotifications();
+  const { refreshPosts } = usePosts();
   
   console.log('🔄 DataLoader rendered, user:', user?.id, 'authenticated:', isAuthenticated);
   
@@ -39,6 +41,13 @@ export function DataLoader() {
       // 将新通知添加到 Redux store
       addNotification(latestNotification);
       console.log('✅ DataLoader: 通知已添加到 Redux store');
+
+      // 如果是评论通知，刷新帖子流以更新评论数
+      if (latestNotification.type === 'COMMENT') {
+        try {
+          refreshPosts();
+        } catch {}
+      }
     }
   }, [wsNotifications, addNotification]);
 

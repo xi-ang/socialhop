@@ -108,7 +108,12 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
         };
         
         setLocalComments((prev: any) => [newCommentData, ...prev]);
-        setLocalCommentCount((prev: any) => prev + 1);
+        // 优先使用服务端返回的最新计数，避免和后端实际数量不一致
+        if (data.post && data.post._count && typeof data.post._count.comments === 'number') {
+          setLocalCommentCount(data.post._count.comments);
+        } else {
+          setLocalCommentCount((prev: any) => prev + 1);
+        }
         
         // 同时触发帖子列表的刷新（但不刷新页面）
         refreshPosts();

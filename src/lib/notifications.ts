@@ -1,5 +1,24 @@
 import prisma from "@/lib/prisma";
 
+// 通过外部 WebSocket 服务器广播通知
+async function broadcastViaWebSocket(userId: string, notification: any) {
+  try {
+    const port = process.env.WEBSOCKET_PORT || 8080;
+    const baseUrl = process.env.WEBSOCKET_URL || `http://localhost:${port}`;
+    const url = `${baseUrl}/broadcast`;
+
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, notification }),
+    });
+  } catch (error) {
+    console.warn('⚠️ WebSocket broadcast failed (notification will still be stored):', error);
+  }
+}
+
 // 检查用户通知设置
 async function checkUserNotificationSettings(
   userId: string, 
@@ -112,6 +131,8 @@ export async function createNotification(
       });
       
       console.log(`✅ Updated existing notification: ${updated.id}`);
+      // 广播到 WebSocket（客户端收到后会主动拉取未读数量）
+      await broadcastViaWebSocket(recipientId, updated);
       console.log(`🔔 === CREATE NOTIFICATION END (UPDATED) ===\n`);
       return updated;
     }
@@ -152,6 +173,8 @@ export async function createNotification(
     });
     
     console.log(`✅ Created notification: ${notification.id}`);
+    // 广播到 WebSocket（客户端收到后会主动拉取未读数量）
+    await broadcastViaWebSocket(recipientId, notification);
     console.log(`🔔 === CREATE NOTIFICATION END (SUCCESS) ===\n`);
     return notification;
   } catch (error) {

@@ -92,6 +92,37 @@ const server = createServer((req, res) => {
     return;
   }
   
+  // 处理广播未读数量的HTTP请求
+  if (pathname === '/broadcast-unread' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', async () => {
+      try {
+        const { userId } = JSON.parse(body);
+        if (!userId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing userId' }));
+          return;
+        }
+        
+        const count = await getUnreadCountFromDB(userId);
+        const success = broadcastUnreadCount(userId, count);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success, count }));
+      } catch (error) {
+        console.error('❌ Error broadcasting unread count via HTTP:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to broadcast unread count' }));
+      }
+    });
+    
+    return;
+  }
+  
   // 健康检查端点
   if (pathname === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });

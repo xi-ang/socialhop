@@ -426,7 +426,8 @@ class ApiClient {
     // 缓存策略：60秒缓存，适合首页展示，平衡新鲜度和性能
     getAll: (page: number = 1, limit: number = 10) => 
       this.request(`/posts?page=${page}&limit=${limit}`, {
-        cacheConfig: { ttl: 60, revalidate: 60, tags: ['posts'], mode: 'cache-first' }
+        // 使用网络优先，缩短缓存时间，避免跨设备写入后首页长时间读取到旧缓存
+        cacheConfig: { ttl: 15, revalidate: 15, tags: ['posts'], mode: 'network-first' }
       }),
     
     // 👥 获取关注用户的帖子 - 个性化内容

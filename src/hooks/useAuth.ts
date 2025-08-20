@@ -21,7 +21,11 @@ export function useAuth() {
     try {
       await dispatch(loginUser({ email, password })).unwrap();
     } catch (error) {
-      throw error;
+      const message =
+        error instanceof Error
+          ? error.message
+          : (error && (error as any).message) || (typeof error === 'string' ? error : '登录失败');
+      throw new Error(message);
     }
   }, [dispatch]);
 
@@ -34,7 +38,11 @@ export function useAuth() {
       // - 失败: { type: 'auth/register/rejected', error: { message: '用户名或邮箱已被使用' } }
       await dispatch(registerUser({ email, username, password, name })).unwrap();
     } catch (error) {
-      throw error;
+      const message =
+        error instanceof Error
+          ? error.message
+          : (error && (error as any).message) || (typeof error === 'string' ? error : '注册失败');
+      throw new Error(message);
     }
   }, [dispatch]);
 
