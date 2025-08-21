@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 async function broadcastViaWebSocket(userId: string, notification: any) {
   try {
     const port = process.env.WEBSOCKET_PORT || 8080;
-    const baseUrl = process.env.WEBSOCKET_URL || `http://localhost:${port}`;
+    const baseUrl = process.env.WEBSOCKET_URL || (process.env.NODE_ENV === 'production' ? '' : `http://localhost:${port}`);
     const url = `${baseUrl}/broadcast`;
 
     await fetch(url, {

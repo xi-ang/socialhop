@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
     console.log('📤 Data:', { userId, notification });
     
     // 直接向外部 WebSocket 服务器发送广播请求
-    const response = await fetch('http://localhost:8080/broadcast', {
+    const port = process.env.WEBSOCKET_PORT || 8080;
+    const baseUrl = process.env.WEBSOCKET_URL || `http://localhost:${port}`;
+    const response = await fetch(`${baseUrl}/broadcast`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

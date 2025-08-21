@@ -6,11 +6,9 @@ export const revalidate = 0;
 
 // 获取用户信息的函数（仅用于 SEO）
 async function getUserById(userId: string) {
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : process.env.NODE_ENV === 'production' 
-      ? 'https://your-domain.com' 
-      : 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_ORIGIN
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+    || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
 
   try {
     const res = await fetch(`${baseUrl}/api/users/${userId}`, {

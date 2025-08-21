@@ -5,7 +5,9 @@ import prisma from '@/lib/prisma';
 
 async function broadcastNotification(userId: string, notification: any, creator: any) {
   try {
-    const response = await fetch('http://localhost:8080/broadcast', {
+    const port = process.env.WEBSOCKET_PORT || 8080;
+    const baseUrl = process.env.WEBSOCKET_URL || `http://localhost:${port}`;
+    const response = await fetch(`${baseUrl}/broadcast`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

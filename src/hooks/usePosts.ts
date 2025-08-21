@@ -1,81 +1,28 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useCallback } from 'react';
 import type { RootState, AppDispatch } from '@/store';
-import { 
-  refreshPosts as refreshPostsAction,
-  fetchPosts,
-  toggleLike,
-  optimisticToggleLike,
-  addPost,
-  removePost,
-  updatePost,
-  clearError,
-} from '@/store/slices/postsSlice';
+import { refreshPosts as refreshPostsAction } from '@/store/slices/postsSlice';
 
+/**
+ * 帖子刷新事件总线（瘦身版）
+ *
+ * 说明：
+ * - 当前项目中，各页面自行管理帖子列表与乐观更新；
+ * - 本 Hook 仅负责跨组件的“刷新信号”派发与订阅；
+ * - 使用方式：组件调用 refreshPosts() 发出刷新事件；监听 refreshCounter 变化在本地触发实际加载。
+ */
 export function usePosts() {
   const dispatch = useDispatch<AppDispatch>();
-  
-  const {
-    posts,
-    loading,
-    error,
-    pagination,
-    refreshCounter,
-  } = useSelector((state: RootState) => state.posts);
 
-  // 刷新帖子（触发其他组件重新加载）
+  // 仅选择 refreshCounter，避免无关字段导致的重渲染
+  const refreshCounter = useSelector((state: RootState) => state.posts.refreshCounter);
+
   const refreshPosts = useCallback(() => {
     dispatch(refreshPostsAction());
   }, [dispatch]);
 
-  // 获取帖子列表
-  const loadPosts = useCallback((page = 1, limit = 10) => {
-    return dispatch(fetchPosts({ page, limit }));
-  }, [dispatch]);
-
-  // 点赞/取消点赞
-  const handleToggleLike = useCallback((postId: string, hasLiked: boolean) => {
-    // 乐观更新
-    dispatch(optimisticToggleLike({ postId, hasLiked }));
-    // 发送请求
-    dispatch(toggleLike({ postId }));
-  }, [dispatch]);
-
-  // 添加新帖子
-  const addNewPost = useCallback((post: any) => {
-    dispatch(addPost(post));
-  }, [dispatch]);
-
-  // 删除帖子
-  const deletePost = useCallback((postId: string) => {
-    dispatch(removePost(postId));
-  }, [dispatch]);
-
-  // 更新帖子
-  const editPost = useCallback((id: string, updates: any) => {
-    dispatch(updatePost({ id, updates }));
-  }, [dispatch]);
-
-  // 清除错误
-  const clearPostsError = useCallback(() => {
-    dispatch(clearError());
-  }, [dispatch]);
-
   return {
-    // State
-    posts,
-    loading,
-    error,
-    pagination,
     refreshCounter,
-    
-    // Actions
     refreshPosts,
-    loadPosts,
-    handleToggleLike,
-    addNewPost,
-    deletePost,
-    editPost,
-    clearPostsError,
   };
 }

@@ -74,10 +74,11 @@ export function useNotificationWebSocket() {
       console.log('🚀 Connecting to WebSocket server for user:', user.id);
       
       // 根据环境选择 WebSocket 服务器地址
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
-                   (process.env.NODE_ENV === 'production' 
-                     ? `ws://${window.location.hostname}:8080` 
-                     : 'ws://localhost:8080');
+      // 生产环境务必通过环境变量提供完整的 WS 地址（支持 wss://），开发环境回退到本地
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL
+        || (process.env.NODE_ENV === 'production'
+              ? `wss://${window.location.host.replace(/^http(s)?:\/\//, '')}`
+              : 'ws://localhost:8080');
       
       console.log('📡 WebSocket URL:', wsUrl);
       

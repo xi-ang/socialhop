@@ -29,9 +29,11 @@ class ApiClient {
   constructor(baseUrl?: string) {
     // 在服务器端，需要完整的URL
     if (typeof window === 'undefined') {
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      const host = process.env.VERCEL_URL || process.env.HOST || 'localhost:3000';
-      this.baseUrl = baseUrl || `${protocol}://${host}/api`;
+      // 生产环境优先读取 NEXT_PUBLIC_APP_ORIGIN 或 VERCEL_URL，避免写死 localhost
+      const origin = process.env.NEXT_PUBLIC_APP_ORIGIN
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+        || (process.env.HOST ? `https://${process.env.HOST}` : 'http://localhost:3000');
+      this.baseUrl = baseUrl || `${origin}/api`;
     } else {
       // 在客户端，可以使用相对路径
       this.baseUrl = baseUrl || '/api';

@@ -6,15 +6,21 @@ import {
   addNotification,
   markAsRead,
   markAllAsRead,
-  removeNotification,
   setUnreadCount,
-  updateSettings,
   setLoading,
   setError,
-  clearError 
 } from '@/store/slices/notificationsSlice';
 
-// 通知相关的 hook
+/**
+ * 通知领域 Hook（瘦身版）
+ *
+ * 职责：
+ * - 统一从 Redux 读取通知列表/未读数/加载态/错误态
+ * - 提供被真实使用的操作：加载列表、单条/全部已读、添加新通知、设置未读数
+ * 说明：
+ * - 诸如删除通知、更新通知设置等操作目前未在页面中使用，故不在本 Hook 暴露，避免 API 面过大；
+ * - 如后续需要，可再逐步按需补充，保持“用多少、暴露多少”的最小原则。
+ */
 export function useNotifications() {
   const dispatch = useAppDispatch();
   const notificationsState = useAppSelector((state) => {
@@ -67,36 +73,12 @@ export function useNotifications() {
     }
   }, [dispatch]);
 
-  const deleteNotification = useCallback(async (notificationId: string) => {
-    try {
-      await apiClient.notifications.delete(notificationId);
-      dispatch(removeNotification(notificationId));
-      return true;
-    } catch (error) {
-      dispatch(setError('删除通知失败'));
-      return false;
-    }
-  }, [dispatch]);
-
-  const updateNotificationSettings = useCallback(async (newSettings: any) => {
-    try {
-      await apiClient.notifications.updateSettings(newSettings);
-      dispatch(updateSettings(newSettings));
-    } catch (error) {
-      dispatch(setError('更新设置失败'));
-    }
-  }, [dispatch]);
-
   const addNewNotification = useCallback((notification: any) => {
     dispatch(addNotification(notification));
   }, [dispatch]);
 
   const updateUnreadCount = useCallback((count: number) => {
     dispatch(setUnreadCount(count));
-  }, [dispatch]);
-
-  const clearNotificationError = useCallback(() => {
-    dispatch(clearError());
   }, [dispatch]);
 
   return {
@@ -108,10 +90,7 @@ export function useNotifications() {
     loadNotifications,
     markAsRead: markNotificationAsRead,
     markAllAsRead: markAllNotificationsAsRead,
-    deleteNotification,
-    updateSettings: updateNotificationSettings,
     addNotification: addNewNotification,
     setUnreadCount: updateUnreadCount,
-    clearError: clearNotificationError,
   };
 }
