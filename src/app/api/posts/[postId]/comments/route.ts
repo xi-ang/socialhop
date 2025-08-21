@@ -101,6 +101,7 @@ export async function POST(
 
     console.log(`✅ === COMMENT API COMPLETED ===\n`);
     // 返回最新的帖子评论统计，便于前端无刷新更新列表上的评论数
+    // 说明：前端 PostCard 会优先使用此计数，避免跨设备/并发下本地 +1 与真实不一致
     const postCount = await prisma.post.findUnique({
       where: { id: postId },
       select: { _count: { select: { comments: true } } }

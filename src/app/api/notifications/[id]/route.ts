@@ -56,7 +56,7 @@ export async function POST(
   }
 }
 
-// 兼容 PATCH 方法标记为已读
+// 兼容 PATCH 方法标记为已读（客户端默认使用 PATCH）
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+// WebSocket 服务进程
+// 作用：
+// - 维护用户到多连接的映射（多设备/多标签页）
+// - 心跳保活与自动清理无效连接
+// - 提供 /broadcast 与 /broadcast-unread 两个 HTTP 端点，供业务后端以 HTTP 方式驱动广播
+// - 处理客户端消息：register、get_unread_count、ping/pong
+
 // 手动加载.env文件
 const fs = require('fs');
 const path = require('path');
@@ -92,7 +99,7 @@ const server = createServer((req, res) => {
     return;
   }
   
-  // 处理广播未读数量的HTTP请求
+  // 处理广播未读数量的HTTP请求——使用场景：在“全部标记已读”/单条标记已读 等操作后也实时下发未读数到其它设备，
   if (pathname === '/broadcast-unread' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {

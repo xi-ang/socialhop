@@ -31,6 +31,8 @@ interface WebSocketMessage {
   userId?: string;
 }
 
+// WebSocket 客户端 Hook
+// 作用：统一管理连接、心跳、自动重连与收发；不直接改 Redux，由全局接驳器 DataLoader 消费此 Hook 的输出
 export function useNotificationWebSocket() {
   const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);

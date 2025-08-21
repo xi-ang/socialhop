@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 
 // 通过外部 WebSocket 服务器广播通知
+// 注意：广播失败不影响主流程（通知已成功写库），此处仅做日志告警
 async function broadcastViaWebSocket(userId: string, notification: any) {
   try {
     const port = process.env.WEBSOCKET_PORT || 8080;
