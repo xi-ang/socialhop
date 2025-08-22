@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -258,7 +259,7 @@ export default function ReduxNotificationsPage() {
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-muted-foreground">
                             {/* {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })} */}
-                            {formatDistanceToNow(new Date(notification.createdAt))} ago
+                            {formatDistanceToNow(new Date(notification.createdAt), { locale: zhCN })} 前
                           </span>
                           
                           {!notification.read && (

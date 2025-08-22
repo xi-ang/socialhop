@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { formatTimeAgo } from '@/lib/timeFormat';
 import { apiClient } from '@/lib/api-client';
 import toast from 'react-hot-toast';

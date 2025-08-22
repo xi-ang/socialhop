@@ -55,7 +55,7 @@ export default function InfinitePosts({
       }
     } catch (error) {
       console.error('Error loading more posts:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load more posts');
+              setError(error instanceof Error ? error.message : '加载更多帖子失败');
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +76,7 @@ export default function InfinitePosts({
       }
     } catch (error) {
       console.error('Error refreshing posts:', error);
-      setError(error instanceof Error ? error.message : 'Failed to refresh posts');
+              setError(error instanceof Error ? error.message : '刷新帖子失败');
     } finally {
       setIsRefreshing(false);
     }

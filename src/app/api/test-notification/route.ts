@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: '未授权访问' },
         { status: 401 }
       );
     }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Failed to create test notification:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create test notification' },
+              { success: false, error: '创建测试通知失败' },
       { status: 500 }
     );
   }

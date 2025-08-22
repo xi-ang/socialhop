@@ -17,7 +17,6 @@ export function formatTimeAgo(date: Date): string {
   
   // 24小时内显示相对时间
   return formatDistanceToNow(date, { 
-    addSuffix: true, 
     locale: zhCN 
-  });
+  }) + '前';
 }

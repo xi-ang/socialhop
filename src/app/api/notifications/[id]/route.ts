@@ -12,7 +12,7 @@ export async function POST(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: '未授权访问' },
         { status: 401 }
       );
     }
@@ -50,7 +50,7 @@ export async function POST(
   } catch (error) {
     console.error('Mark notification as read error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to mark notification as read' },
+              { success: false, error: '标记通知已读失败' },
       { status: 500 }
     );
   }
@@ -74,7 +74,7 @@ export async function DELETE(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: '未授权访问' },
         { status: 401 }
       );
     }
@@ -91,12 +91,12 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Notification deleted successfully',
+              message: '通知删除成功',
     });
   } catch (error) {
     console.error('Delete notification error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete notification' },
+              { success: false, error: '删除通知失败' },
       { status: 500 }
     );
   }

@@ -17,7 +17,7 @@ export async function POST(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: '未授权访问' },
         { status: 401 }
       );
     }
@@ -30,7 +30,7 @@ export async function POST(
 
     if (!content) {
       return NextResponse.json(
-        { success: false, error: 'Content is required' },
+        { success: false, error: '评论内容不能为空' },
         { status: 400 }
       );
     }
@@ -44,7 +44,7 @@ export async function POST(
 
     if (!post) {
       return NextResponse.json(
-        { success: false, error: 'Post not found' },
+        { success: false, error: '帖子不存在' },
         { status: 404 }
       );
     }
@@ -117,7 +117,7 @@ export async function POST(
     console.error('Create comment error:', error);
     console.error('❌ === COMMENT API ERROR END ===\n');
     return NextResponse.json(
-      { success: false, error: 'Failed to create comment' },
+              { success: false, error: '创建评论失败' },
       { status: 500 }
     );
   }

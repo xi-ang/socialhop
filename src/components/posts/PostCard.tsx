@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
-import { formatDistanceToNow } from "date-fns";
+
 import { formatTimeAgo } from "@/lib/timeFormat";
 import { DeleteAlertDialog } from "@/components/common/DeleteAlertDialog";
 import { Button } from "@/components/ui/button";
@@ -56,76 +56,73 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
     router.push(`/post/${post.id}`);
   };
 
-  const handleLike = async () => {
-    if (isLiking) return;
-    console.log('🔄 Real like button clicked for post:', post.id);
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error('请先登录');
+      return;
+    }
+
+    // 乐观更新
+    setHasLiked((prev: any) => !prev);
+    setOptmisticLikes((prev: any) => prev + (hasLiked ? -1 : 1));
+
     try {
-      setIsLiking(true);
-      setHasLiked((prev: any) => !prev);
-      setOptmisticLikes((prev: any) => prev + (hasLiked ? -1 : 1));
-
-      console.log('📤 Calling like API...');
-      const result = await apiClient.posts.toggleLike(post.id);
-      console.log('✅ Like API response:', result);
-
+      const result = await apiClient.posts.toggleLike(post.id) as any;
+      if (result.success) {
+        // 更新本地状态
+        setHasLiked(post.likes.some((like: any) => like.userId === dbUserId));
+        setOptmisticLikes(result.post._count.likes);
+      }
     } catch (error) {
+      // 回滚乐观更新
+      setHasLiked((prev: any) => !prev);
+      setOptmisticLikes((prev: any) => prev + (hasLiked ? 1 : -1));
       console.error('❌ Like error:', error);
-      setOptmisticLikes(post._count.likes);
-      setHasLiked(post.likes.some((like: any) => like.userId === dbUserId));
       toast.error('点赞失败，请重试');
-    } finally {
-      setIsLiking(false);
     }
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim() || isCommenting) return;
-    console.log('💬 Real comment button clicked for post:', post.id);
+  const handleComment = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error('请先登录');
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error('请输入评论内容');
+      return;
+    }
+
     try {
-      setIsCommenting(true);
-      
-      console.log('📤 Calling comment API...');
       const data = await apiClient.posts.addComment(post.id, newComment) as any;
-      console.log('✅ Comment API response:', data);
-      
       if (data.success && user) {
         toast.success("评论发布成功");
         setNewComment("");
         
-        // 本地更新评论列表而不是刷新页面
+        // 本地更新评论列表
         const newCommentData = {
           id: data.comment.id,
           content: newComment,
-          createdAt: new Date(),
-          authorId: user.id,
-          postId: post.id,
+          createdAt: new Date().toISOString(),
           author: {
             id: user.id,
-            username: user.username || user.name || '用户',
             name: user.name,
+            username: user.username,
             image: user.image
           }
         };
-        
         setLocalComments((prev: any) => [newCommentData, ...prev]);
-        // 优先使用服务端返回的最新计数，避免和后端实际数量不一致
-        if (data.post && data.post._count && typeof data.post._count.comments === 'number') {
-          setLocalCommentCount(data.post._count.comments);
-        } else {
-          setLocalCommentCount((prev: any) => prev + 1);
-        }
+        // 优先使用服务端返回的最新评论计数，否则本地乐观更新
+        setLocalCommentCount(data.post?._count?.comments ?? ((prev: any) => prev + 1));
         
         // 同时触发帖子列表的刷新（但不刷新页面）
         refreshPosts();
-      } else {
-        throw new Error(data.error || 'Failed to add comment');
       }
-
     } catch (error) {
       console.error('❌ Comment error:', error);
       toast.error("发布评论失败");
-    } finally {
-      setIsCommenting(false);
     }
   };
 
@@ -135,13 +132,13 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
       setIsDeleting(true);
       
       await apiClient.posts.delete(post.id);
-      toast.success("Post deleted successfully");
+      toast.success("帖子删除成功");
       
       // 刷新帖子列表
       refreshPosts();
 
     } catch (error) {
-      toast.error("Failed to delete post");
+      toast.error("删除帖子失败");
     } finally {
       setIsDeleting(false);
     }
@@ -315,7 +312,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
                       </div>
                       <Button
                         size="sm"
-                        onClick={handleAddComment}
+                        onClick={handleComment}
                         className="flex items-center gap-2"
                         disabled={!newComment.trim() || isCommenting}
                       >

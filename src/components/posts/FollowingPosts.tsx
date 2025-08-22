@@ -55,7 +55,7 @@ export default function FollowingPosts({ dbUserId }: FollowingPostsProps) {
       }
     } catch (error) {
       console.error('Error fetching following posts:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+              setError(error instanceof Error ? error.message : '获取关注帖子失败');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);

@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import {
   CalendarIcon,
   EditIcon,
@@ -245,7 +246,7 @@ function ProfilePageClient({
               <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {format(new Date(user.createdAt), "MMMM yyyy")} 加入
+                  {format(new Date(user.createdAt), "yyyy年M月", { locale: zhCN })} 加入
                 </div>
                 
                 <div className="flex space-x-2">

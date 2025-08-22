@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     
     if (!userId || !notification) {
       return NextResponse.json(
-        { success: false, error: 'Missing userId or notification data' },
+        { success: false, error: '缺少用户ID或通知数据' },
         { status: 400 }
       );
     }
@@ -39,13 +39,13 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ Failed to broadcast notification:', response.status, error);
       return NextResponse.json({ 
         success: false, 
-        error: `Failed to broadcast: ${error}` 
+        error: `广播失败: ${error}` 
       }, { status: 500 });
     }
   } catch (error) {
     console.error('❌ Broadcast error:', error);
     return NextResponse.json(
-      { success: false, error: 'WebSocket server not available' },
+              { success: false, error: 'WebSocket服务器不可用' },
       { status: 500 }
     );
   }
