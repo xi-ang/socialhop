@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  compress: true,
-  productionBrowserSourceMaps: false,
-  // 便于在 PM2/Docker 环境下以最小运行时启动
-  output: 'standalone',
+  reactStrictMode: true,  // 启用严格模式
+  swcMinify: true,  // 启用 SWC 压缩
+  compress: true,  // 启用 gzip 压缩
+  productionBrowserSourceMaps: false,  // 关闭浏览器端 source map
+  output: 'standalone',  // 便于在 PM2/Docker 环境下以最小运行时启动
 
   // 🔧 生产环境移除 console（保留 warn/error）
   compiler: {
@@ -51,6 +50,11 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  // 禁用静态生成，改为服务端渲染（解决 Clerk 问题）
+  experimental: {
+    appDir: true,
   },
 };
 
