@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PostCard from "@/components/posts/PostCard";
 import { useAuth } from '@/hooks/useAuth';
@@ -27,7 +29,7 @@ interface Post {
   };
 }
 
-export default function SearchResults() {
+function SearchResultsContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
@@ -84,7 +86,7 @@ export default function SearchResults() {
           </CardTitle>
           {query && (
             <p className="text-sm text-muted-foreground">
-              搜索关键词: "{query}" - 找到 {posts.length} 条结果
+              搜索关键词: &quot;{query}&quot; - 找到 {posts.length} 条结果
             </p>
           )}
         </CardHeader>
@@ -102,11 +104,30 @@ export default function SearchResults() {
             <SearchIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-medium mb-2">没有找到相关帖子</h3>
             <p className="text-muted-foreground">
-              {query ? `没有找到包含 "${query}" 的帖子` : '请输入搜索关键词'}
+              {query ? `没有找到包含 &quot;${query}&quot; 的帖子` : '请输入搜索关键词'}
             </p>
           </CardContent>
         </Card>
       )}
     </div>
+  );
+}
+
+export default function SearchResults() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-3xl mx-auto space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SearchIcon className="w-5 h-5" />
+              搜索加载中...
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <SearchResultsContent />
+    </Suspense>
   );
 }
