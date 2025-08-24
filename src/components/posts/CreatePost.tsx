@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuth } from '@/hooks/useAuth';
-import { usePosts } from '@/hooks/usePosts';
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { refreshPosts } from "@/store/slices/postsSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
 import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
@@ -16,7 +17,7 @@ import { sanitizeInput, detectXSS } from "@/lib/security";
 
 function CreatePost() {
   const { user } = useAuth();
-  const { refreshPosts } = usePosts();
+  const dispatch = useDispatch();
   const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isPosting, setIsPosting] = useState(false);
@@ -82,7 +83,7 @@ function CreatePost() {
         setImages([]);
         setMentions([]);
         setShowImageUpload(false);
-        refreshPosts();
+        dispatch(refreshPosts());
         toast.success("帖子发布成功！");
       }
     } catch (error) {

@@ -19,6 +19,8 @@ interface Post {
     comments: number;
   };
   hasLiked?: boolean;
+  lastOperationId?: string; // 乐观更新操作ID，用于防止竞态条件
+  isOptimistic?: boolean; // 是否为乐观更新状态，用于UI显示
 }
 
 interface Pagination {
@@ -68,12 +70,56 @@ export const fetchPosts = createAsyncThunk(
   }
 );
 
-// 异步thunk - 点赞/取消点赞
+/**
+ * 异步thunk - 点赞/取消点赞（简化版）
+ * 实现基础的乐观更新流程，包含防竞态条件和自动回滚
+ */
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
-  async ({ postId }: { postId: string }) => {
-    const result = await apiClient.posts.toggleLike(postId) as any;
-    return { postId, hasLiked: result.hasLiked, likesCount: result.likesCount };
+  async ({ postId }: { postId: string }, { getState, dispatch }) => {
+    const state = getState() as { posts: PostsState };
+    const post = state.posts.posts.find(p => p.id === postId);
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // 生成操作ID防止竞态条件
+    const operationId = `${postId}-${Date.now()}`;
+    
+    // 立即乐观更新UI
+    dispatch(optimisticToggleLike({ 
+      postId, 
+      hasLiked: !post.hasLiked,
+      operationId 
+    }));
+
+    try {
+      const result = await apiClient.posts.toggleLike(postId) as any;
+      
+      // 验证操作是否仍然有效
+      const currentState = getState() as { posts: PostsState };
+      const currentPost = currentState.posts.posts.find(p => p.id === postId);
+      
+      if (currentPost?.lastOperationId !== operationId) {
+        // 有其他操作，返回当前状态
+        return { 
+          postId, 
+          hasLiked: currentPost?.hasLiked || false, 
+          likesCount: currentPost?._count.likes || 0 
+        };
+      }
+
+      return { 
+        postId, 
+        hasLiked: result.success ? !post.hasLiked : post.hasLiked, 
+        likesCount: result.post?._count?.likes || post._count.likes 
+      };
+    } catch (error) {
+      // 失败时回滚
+      dispatch(revertOptimisticUpdate({ postId, operationId }));
+      throw error;
+    }
   }
 );
 
@@ -81,34 +127,51 @@ const postsSlice = createSlice({
   name: 'posts',
   initialState,
   reducers: {
-    addPost: (state, action: PayloadAction<Post>) => {
-      state.posts.unshift(action.payload);
-    },
-    removePost: (state, action: PayloadAction<string>) => {
-      state.posts = state.posts.filter(post => post.id !== action.payload);
-    },
-    updatePost: (state, action: PayloadAction<{ id: string; updates: Partial<Post> }>) => {
-      const { id, updates } = action.payload;
-      const index = state.posts.findIndex(post => post.id === id);
-      if (index !== -1) {
-        state.posts[index] = { ...state.posts[index], ...updates };
-      }
-    },
+
     refreshPosts: (state) => {
       state.refreshCounter += 1;
     },
     clearError: (state) => {
       state.error = null;
     },
-    // 乐观更新点赞状态
-    optimisticToggleLike: (state, action: PayloadAction<{ postId: string; hasLiked: boolean }>) => {
-      const { postId, hasLiked } = action.payload;
+    /**
+     * 乐观更新点赞状态
+     */
+    optimisticToggleLike: (state, action: PayloadAction<{ 
+      postId: string; 
+      hasLiked: boolean;
+      operationId: string;
+    }>) => {
+      const { postId, hasLiked, operationId } = action.payload;
       const post = state.posts.find(p => p.id === postId);
+      
       if (post) {
         post.hasLiked = hasLiked;
         post._count.likes += hasLiked ? 1 : -1;
+        post.lastOperationId = operationId;
+        post.isOptimistic = true;
       }
     },
+    
+    /**
+     * 回滚乐观更新
+     */
+    revertOptimisticUpdate: (state, action: PayloadAction<{ 
+      postId: string; 
+      operationId: string;
+    }>) => {
+      const { postId, operationId } = action.payload;
+      const post = state.posts.find(p => p.id === postId);
+      
+      if (post && post.lastOperationId === operationId) {
+        post.hasLiked = !post.hasLiked;
+        post._count.likes += post.hasLiked ? 1 : -1;
+        post.isOptimistic = false;
+        delete post.lastOperationId;
+      }
+    },
+    
+
   },
   extraReducers: (builder) => {
     // 获取帖子列表
@@ -154,12 +217,10 @@ const postsSlice = createSlice({
 });
 
 export const { 
-  addPost, 
-  removePost, 
-  updatePost, 
   refreshPosts, 
   clearError,
   optimisticToggleLike,
+  revertOptimisticUpdate,
 } = postsSlice.actions;
 
 export default postsSlice.reducer;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from '@/hooks/useAuth';
-import { usePosts } from '@/hooks/usePosts';
 import { apiClient } from '@/lib/api-client';
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -9,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LazyAvatar, LazyAvatarImage, LazyAvatarFallback } from "@/components/ui/lazy-avatar";
+import { useDispatch } from "react-redux";
+import { toggleLike, refreshPosts } from "@/store/slices/postsSlice";
 
 import { formatTimeAgo } from "@/lib/timeFormat";
 import { DeleteAlertDialog } from "@/components/common/DeleteAlertDialog";
@@ -24,8 +25,8 @@ type Post = any;
 
 function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
   const { user } = useAuth();
-  const { refreshPosts } = usePosts();
   const router = useRouter();
+  const dispatch = useDispatch();
   const [newComment, setNewComment] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -63,24 +64,8 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
       return;
     }
 
-    // 乐观更新
-    setHasLiked((prev: any) => !prev);
-    setOptmisticLikes((prev: any) => prev + (hasLiked ? -1 : 1));
-
-    try {
-      const result = await apiClient.posts.toggleLike(post.id) as any;
-      if (result.success) {
-        // 更新本地状态
-        setHasLiked(post.likes.some((like: any) => like.userId === dbUserId));
-        setOptmisticLikes(result.post._count.likes);
-      }
-    } catch (error) {
-      // 回滚乐观更新
-      setHasLiked((prev: any) => !prev);
-      setOptmisticLikes((prev: any) => prev + (hasLiked ? 1 : -1));
-      console.error('❌ Like error:', error);
-      toast.error('点赞失败，请重试');
-    }
+    // 使用Redux的乐观更新
+    dispatch(toggleLike({ postId: post.id }) as any);
   };
 
   const handleComment = async (e: React.MouseEvent) => {
@@ -118,7 +103,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
         setLocalCommentCount(data.post?._count?.comments ?? ((prev: any) => prev + 1));
         
         // 同时触发帖子列表的刷新（但不刷新页面）
-        refreshPosts();
+        dispatch(refreshPosts());
       }
     } catch (error) {
       console.error('❌ Comment error:', error);
@@ -135,7 +120,7 @@ function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
       toast.success("帖子删除成功");
       
       // 刷新帖子列表
-      refreshPosts();
+      dispatch(refreshPosts());
 
     } catch (error) {
       toast.error("删除帖子失败");

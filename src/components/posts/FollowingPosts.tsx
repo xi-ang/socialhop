@@ -6,7 +6,8 @@ import PostCard from './PostCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, UsersIcon } from 'lucide-react';
 import { Post, apiClient } from '@/lib/api-client';
-import { usePosts } from '@/hooks/usePosts';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 interface FollowingPostsProps {
   dbUserId: string | null;
@@ -24,7 +25,7 @@ export default function FollowingPosts({ dbUserId }: FollowingPostsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { refreshCounter } = usePosts();
+  const refreshCounter = useSelector((state: RootState) => state.posts.refreshCounter);
 
   const { ref, inView } = useInView({
     threshold: 0,

@@ -11,20 +11,38 @@
 const fs = require('fs');
 const path = require('path');
 
-try {
-  const envPath = path.join(__dirname, '..', '.env');
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split('\n').forEach(line => {
-      const [key, value] = line.split('=');
-      if (key && value) {
-        process.env[key.trim()] = value.trim().replace(/"/g, '');
-      }
-    });
-    console.log('✅ Environment variables loaded from .env file');
+// 优先加载 .env.local，然后是 .env
+const envFiles = ['.env.local', '.env'];
+let envLoaded = false;
+
+for (const envFile of envFiles) {
+  try {
+    const envPath = path.join(__dirname, '..', envFile);
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envContent.split('\n').forEach(line => {
+        if (line.trim() && !line.trim().startsWith('#')) {
+          const equalIndex = line.indexOf('=');
+          if (equalIndex > 0) {
+            const key = line.substring(0, equalIndex).trim();
+            const value = line.substring(equalIndex + 1).trim();
+            // 移除首尾的引号，但保留内容中的特殊字符
+            const cleanValue = value.replace(/^["']|["']$/g, '');
+            process.env[key] = cleanValue;
+          }
+        }
+      });
+      console.log(`✅ Environment variables loaded from ${envFile}`);
+      envLoaded = true;
+      break;
+    }
+  } catch (error) {
+    // 静默处理错误，减少日志噪音
   }
-} catch (error) {
-  console.log('⚠️ Could not load .env file:', error.message);
+}
+
+if (!envLoaded) {
+  console.log('⚠️ No .env files found, using default values');
 }
 
 const { createServer } = require('http');
@@ -34,17 +52,15 @@ const cookie = require('cookie');
 const jwt = require('jsonwebtoken');
 
 console.log('🚀 Starting WebSocket server...');
+console.log('🔑 JWT_SECRET loaded:', process.env.JWT_SECRET ? 'Yes' : 'No');
+console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
 
 // JWT验证函数 - 使用与项目相同的JWT配置
 function verifyJwtToken(token) {
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
-    // console.log('🔍 Verifying JWT token with secret:', JWT_SECRET.substring(0, 10) + '...');
-    // console.log('🔍 Token to verify:', token.substring(0, 20) + '...');
-    
     const payload = jwt.verify(token, JWT_SECRET);
-    // console.log('✅ JWT verification successful, payload:', payload);
-    console.log('✅ JWT verification successful');
+    console.log('✅ JWT verification successful for user:', payload.userId);
     return payload;
   } catch (error) {
     console.error('❌ JWT verification failed:', error.message);

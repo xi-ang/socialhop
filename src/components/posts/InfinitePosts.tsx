@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { apiClient, Post } from '@/lib/api-client';
 import PostCard from '@/components/posts/PostCard';
-import { usePosts } from '@/hooks/usePosts';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2Icon } from 'lucide-react';
@@ -31,7 +32,7 @@ export default function InfinitePosts({
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { refreshCounter } = usePosts();
+  const refreshCounter = useSelector((state: RootState) => state.posts.refreshCounter);
 
   const { ref, inView } = useInView({
     threshold: 0,
@@ -87,7 +88,7 @@ export default function InfinitePosts({
     if (refreshCounter > 0) {
       refreshPosts();
     }
-  }, [refreshCounter, refreshPosts]);
+  }, [refreshCounter]);
 
   useEffect(() => {
     if (inView) {

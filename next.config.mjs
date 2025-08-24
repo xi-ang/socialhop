@@ -6,6 +6,9 @@ const nextConfig = {
   productionBrowserSourceMaps: false,  // 关闭浏览器端 source map
   output: 'standalone',  // 便于在 PM2/Docker 环境下以最小运行时启动
 
+  // 注意：不要在这里暴露敏感环境变量到客户端
+  // 只有 NEXT_PUBLIC_ 开头的环境变量才会被客户端访问
+
   // 🔧 生产环境移除 console（保留 warn/error）
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
@@ -53,9 +56,9 @@ const nextConfig = {
   },
 
   // 禁用静态生成，改为服务端渲染（解决 Clerk 问题）
-  experimental: {
-    appDir: true,
-  },
+  // experimental: {
+  //   appDir: true,  // 这个选项在 Next.js 13+ 中已经默认启用，不需要显式设置
+  // },
 };
 
 export default nextConfig;
