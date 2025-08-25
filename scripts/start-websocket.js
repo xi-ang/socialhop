@@ -11,8 +11,11 @@
 const fs = require('fs');
 const path = require('path');
 
-// 优先加载 .env.local，然后是 .env
-const envFiles = ['.env.local', '.env'];
+// 根据环境加载不同的环境变量文件
+// 强制设置为生产模式，确保服务器绑定到 0.0.0.0
+process.env.NODE_ENV = 'production';
+const isProduction = true;
+const envFiles = ['.env', '.env.production'];
 let envLoaded = false;
 
 for (const envFile of envFiles) {
@@ -32,7 +35,7 @@ for (const envFile of envFiles) {
           }
         }
       });
-      console.log(`✅ Environment variables loaded from ${envFile}`);
+      console.log(`✅ Environment variables loaded from ${envFile} (${isProduction ? 'production' : 'development'})`);
       envLoaded = true;
       break;
     }
@@ -431,9 +434,11 @@ global.broadcastNotification = broadcastNotification;
 global.broadcastUnreadCount = broadcastUnreadCount;
 
 // 启动服务器
-const PORT = process.env.WEBSOCKET_PORT || 8080; 
-server.listen(PORT, () => {
-  console.log(`🎯 WebSocket server running on ws://localhost:${PORT}`);
+const PORT = process.env.WEBSOCKET_PORT || 8080;
+const HOST = '0.0.0.0'; // 强制绑定到所有网络接口
+
+server.listen(PORT, HOST, () => {
+  console.log(`🎯 WebSocket server running on ws://${HOST}:${PORT} (production)`);
   console.log('📡 Waiting for connections...');
 });
 

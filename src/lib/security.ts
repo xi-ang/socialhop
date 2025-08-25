@@ -81,7 +81,7 @@ export function generateCSPHeader(): string {
     "frame-src 'none'",                     // 禁止嵌入框架
     "base-uri 'self'",                      // 防止base标签劫持
     "form-action 'self'",                   // 限制表单提交目标
-    ...(isDev ? [] : ["upgrade-insecure-requests"]), // 生产环境才升级HTTP到HTTPS
+    // ...(isDev ? [] : ["upgrade-insecure-requests"]), // 生产环境才升级HTTP到HTTPS
   ].join('; ');
 }
 
