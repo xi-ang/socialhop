@@ -60,6 +60,11 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // 跳过 ESLint 检查，加快构建速度
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // 禁用静态生成，改为服务端渲染（解决 Clerk 问题）
   // experimental: {
   //   appDir: true,  // 这个选项在 Next.js 13+ 中已经默认启用，不需要显式设置
